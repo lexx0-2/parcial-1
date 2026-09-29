@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content-card"><h2>14 módulos de aprendizaje</h2><p>Teoría, fórmulas, ejemplos paso a paso y visualizadores interactivos.</p></section>
+<section class="module-grid">
+{% for n,title in [(1,"Sumas de Riemann"),(2,"Regla del Trapecio"),(3,"Regla del Punto Medio"),(4,"Regla de Simpson"),(5,"Integral Definida y Área bajo la Curva"),(6,"Integración Directa"),(7,"Módulo 7"),(8,"Módulo 8"),(9,"Módulo 9"),(10,"Módulo 10"),(11,"Módulo 11"),(12,"Módulo 12"),(13,"Módulo 13"),(14,"Módulo 14")] %}
+<a class="module-card" href="/modulo/{{ '%02d'|format(n) }}/"><span class="number">Módulo {{ n }}</span><strong>{{ title }}</strong><small>{{ "Disponible" if n<7 else "Próximamente - Fase 2/3" }}</small></a>
+{% endfor %}
+</section>
+{% endblock %}
