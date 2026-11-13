@@ -71,10 +71,17 @@ x - 1 - 1/x
 
 El resultado se muestra con **KaTeX** y se comprueba mediante derivación.
 
-### Módulos 7–14
-Existen como páginas independientes con el mensaje:
+### Módulos 7–14 — Técnicas de integración y volúmenes
+7. **Integración por partes**: identidad de integración por partes y ejemplos.
+8. **Integración racional**: factorización y fracciones parciales.
+9. **Integración irracional**: radicales, potencias fraccionarias y sustituciones.
+10. **Integración trigonométrica**: identidades trigonométricas y reducción de potencias.
+11. **Sustitución trigonométrica**: sustituciones con seno, tangente y secante.
+12. **Sustitución universal**: t=tan(x/2) para racionalizar seno y coseno.
+13. **Volúmenes con sección conocida**: secciones cuadradas, semicirculares y triangulares.
+14. **Volúmenes de sólidos de revolución**: discos, arandelas y capas cilíndricas.
 
-**Próximamente - Fase 2/3**
+Cada módulo tiene página propia, teoría, fórmulas, ejemplos resueltos, calculadora de integrales definidas y gráfica interactiva. Los módulos 13 y 14 incluyen controles específicos para calcular volúmenes.
 
 ## Tecnologías
 
