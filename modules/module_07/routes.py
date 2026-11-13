@@ -4,4 +4,4 @@ bp = Blueprint("module_07", __name__, url_prefix="/modulo/07")
 
 @bp.route("/")
 def index():
-    return render_template("placeholder.html", module_number=7)
+    return render_template("module_07.html")
