@@ -144,15 +144,26 @@ async function drawMethod(e,A,B) {
     cap.textContent="La curva A(x) representa el área de cada sección perpendicular al eje x. El volumen es el área acumulada a lo largo del intervalo.";
   } else if(moduleNumber===14){
     const mode=$("method")?.value||"disk";
-    if(mode==="shell"){
-      traces.push({x:X,y:X.map((v,i)=>2*Math.PI*v*y[i]),mode:"lines",name:"2π·x·f(x)",line:{dash:"dash",width:3}});
-    } else {
-      const inner=mode==="washer"?Number(await Promise.resolve($("inner").value||0)):0;
-      traces.push({x:X,y:y.map(v=>Math.PI*(v*v-inner*inner)),mode:"lines",name:"π(R²-r²)",line:{dash:"dash",width:3}});
+    layout.title="Sólido de revolución · representación del método";
+    cap.textContent=mode==="shell"?"Capas cilíndricas: cada capa tiene radio x, altura f(x) y circunferencia 2πx.":"Discos/arandelas: la región gira alrededor del eje x y forma una superficie de revolución.";
+    if(mode!=="shell"){
+      const theta=Array.from({length:45},(_,j)=>2*Math.PI*j/44);
+      const outerY=[],outerZ=[],innerY=[],innerZ=[];
+      const inner=mode==="washer"?Math.max(0,Number($("inner").value||0)):0;
+      for(let i=0;i<X.length;i++){
+        const radius=Math.max(0,Math.abs(y[i]));
+        outerY.push(theta.map(t=>radius*Math.cos(t)));
+        outerZ.push(theta.map(t=>radius*Math.sin(t)));
+        innerY.push(theta.map(t=>inner*Math.cos(t)));
+        innerZ.push(theta.map(t=>inner*Math.sin(t)));
+      }
+      const surfaces=[{type:"surface",x:X,y:outerY,z:outerZ,colorscale:"Blues",showscale:false,opacity:.88,name:"Superficie exterior"}];
+      if(mode==="washer"&&inner>0) surfaces.push({type:"surface",x:X,y:innerY,z:innerZ,colorscale:"Greys",showscale:false,opacity:.55,name:"Superficie interior"});
+      Plotly.newPlot("plot",surfaces,{title:layout.title,paper_bgcolor:"rgba(0,0,0,0)",font:layout.font,margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje de giro (x)"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}},{responsive:true,displaylogo:false});
+      return;
     }
-    layout.title="Sólido de revolución · radio y función";
-    layout.yaxis.title="f(x) / integrando de volumen";
-    cap.textContent=mode==="shell"?"Capas cilíndricas: radio x, altura f(x) y circunferencia 2πx.":"Discos/arandelas: el radio exterior es f(x); la arandela resta el radio interior.";
+    traces.push({x:X,y:X.map((v,i)=>2*Math.PI*v*y[i]),mode:"lines",name:"Integrando de capas: 2πx·f(x)",line:{dash:"dash",width:3}});
+    layout.yaxis.title="2πx·f(x)";
   }
   Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
 }
