@@ -25,3 +25,18 @@ jobs:
           python -m pip install -r requirements.txt
       - name: Run application regression tests
         run: python -m unittest discover -s tests -v
+      - name: Install Playwright
+        run: npm install --no-save playwright
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start Flask application
+        run: |
+          python app.py > /tmp/parcial-app.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail http://127.0.0.1:5000/health; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/parcial-app.log
+          exit 1
+      - name: Verify rendered 2D and 3D graphs in Chromium
+        run: node tests/browser_visual_smoke.mjs
