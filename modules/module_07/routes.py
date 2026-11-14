@@ -12,6 +12,6 @@ def index():
         theory="Se utiliza cuando el integrando es un producto y derivar una parte simplifica la expresión. El criterio LIATE orienta la elección de u.",
         explanation="Observa la representación y sigue los pasos del método antes de resolver el ejercicio.",
         default_expr="x*exp(x)",
-        examples=[r"""\(\int xe^x dx\). **1.** Elige \(u=x\), \(dv=e^x dx\). **2.** Entonces \(du=dx\), \(v=e^x\). **3.** Aplica partes: \(xe^x-\int e^x dx\). **4.** Integra: \(xe^x-e^x+C\).""",r"""\(\int x\cos x\,dx\). **1.** Elige \(u=x\), \(dv=\cos x\,dx\). **2.** \(du=dx\), \(v=\sin x\). **3.** Sustituye: \(x\sin x-\int\sin x\,dx\). **4.** Resultado: \(x\sin x+\cos x+C\)."""],
+        examples=[r"""\(\int xe^x dx\). <b>1.</b> Elige \(u=x\), \(dv=e^x dx\). <b>2.</b> Entonces \(du=dx\), \(v=e^x\). <b>3.</b> Aplica partes: \(xe^x-\int e^x dx\). <b>4.</b> Integra: \(xe^x-e^x+C\).""",r"""\(\int x\cos x\,dx\). <b>1.</b> Elige \(u=x\), \(dv=\cos x\,dx\). <b>2.</b> \(du=dx\), \(v=\sin x\). <b>3.</b> Sustituye: \(x\sin x-\int\sin x\,dx\). <b>4.</b> Resultado: \(x\sin x+\cos x+C\)."""],
         extra=""
     )
