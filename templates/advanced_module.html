@@ -88,7 +88,7 @@
   {{ extra|safe }}
   <div id="result" class="result-panel">Introduce los datos y pulsa calcular.</div>
   <div id="plot" class="plot"></div>
-  <div id="methodDiagram" class="plot"></div>
+  {% if number != 7 %}<div id="methodDiagram" class="plot"></div>{% endif %}
   <p class="plot-caption" id="plotCaption"></p>
 </section>
 
@@ -109,7 +109,7 @@ function plotLayout(title, threeD=false) {
     legend:{orientation:"h",y:-0.2}};
 }
 async function drawMethod(e,A,B) {
-  const X=makeX(A,B,220), sampled=await sampleFormula(e,X), y=sampled.y;
+  const X=makeX(A,B,220), sampled=await sampleFormula(e,X), y=sampled.y.map(v=>v===null?null:Number.isFinite(Number(v))?Number(v):null);
   let traces=[{x:X,y,mode:"lines",name:"f(x)",line:{width:3}}], layout=plotLayout("Representación del integrando");
   const cap=$("plotCaption");
   if(moduleNumber===7){
@@ -138,35 +138,21 @@ async function drawMethod(e,A,B) {
     cap.textContent="Con t = tan(x/2), seno, coseno y dx se convierten en expresiones racionales de t.";
   } else if(moduleNumber===13){
     const shape=$("shape")?.value||"square";
-    const area=y.map(v=>shape==="square"?v*v:shape==="semicircle"?Math.PI*v*v/8:Math.sqrt(3)*v*v/4);
-    traces.push({x:X,y:area,mode:"lines",name:"A(x) · área de sección",line:{width:3,dash:"dash"}});
-    layout.title="Sección transversal · área A(x)";
-    layout.yaxis.title="f(x) / A(x)";
-    cap.textContent="La curva A(x) representa el área de cada sección perpendicular al eje x. El volumen es el área acumulada a lo largo del intervalo.";
+    const area=y.map(v=>v===null?null:shape==="square"?v*v:shape==="semicircle"?Math.PI*v*v/8:Math.sqrt(3)*v*v/4);
+    traces=[{x:X,y,mode:"lines",name:"Dimensión f(x)",line:{width:3}},{x:X,y:area,mode:"lines",name:"Área A(x)",line:{width:3,dash:"dash"},yaxis:"y2"}];
+    layout.title="2D · dimensión y área de las secciones";
+    layout.yaxis={title:"Dimensión de la sección",zeroline:true};
+    layout.yaxis2={title:"Área A(x)",overlaying:"y",side:"right",showgrid:false};
+    cap.textContent="La gráfica compara la dimensión de cada corte con su área A(x). La vista 3D muestra cómo se extruye esa sección a lo largo del eje x.";
   } else if(moduleNumber===14){
-    const mode=$("method")?.value||"disk";
-    layout.title="Sólido de revolución · representación del método";
-    cap.textContent=mode==="shell"?"Capas cilíndricas: cada capa tiene radio x, altura f(x) y circunferencia 2πx.":"Discos/arandelas: la región gira alrededor del eje x y forma una superficie de revolución.";
-    if(mode!=="shell"){
-      const theta=Array.from({length:45},(_,j)=>2*Math.PI*j/44);
-      const outerX=[],outerY=[],outerZ=[],innerX=[],innerY=[],innerZ=[];
-      const inner=mode==="washer"?Math.max(0,Number($("inner").value||0)):0;
-      for(let i=0;i<X.length;i++){
-        const radius=Math.max(0,Math.abs(y[i]));
-        outerX.push(theta.map(()=>X[i]));
-        outerY.push(theta.map(t=>radius*Math.cos(t)));
-        outerZ.push(theta.map(t=>radius*Math.sin(t)));
-        innerX.push(theta.map(()=>X[i]));
-        innerY.push(theta.map(t=>inner*Math.cos(t)));
-        innerZ.push(theta.map(t=>inner*Math.sin(t)));
-      }
-      const surfaces=[{type:"surface",x:outerX,y:outerY,z:outerZ,colorscale:"Blues",showscale:false,opacity:.88,name:"Superficie exterior"}];
-      if(mode==="washer"&&inner>0) surfaces.push({type:"surface",x:innerX,y:innerY,z:innerZ,colorscale:"Greys",showscale:false,opacity:.55,name:"Superficie interior"});
-      Plotly.newPlot("plot",surfaces,{title:layout.title,paper_bgcolor:"rgba(0,0,0,0)",font:layout.font,margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje de giro (x)"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}},{responsive:true,displaylogo:false});
-      return;
-    }
-    traces.push({x:X,y:X.map((v,i)=>2*Math.PI*v*y[i]),mode:"lines",name:"Integrando de capas: 2πx·f(x)",line:{dash:"dash",width:3}});
-    layout.yaxis.title="2πx·f(x)";
+    const mode=$("method")?.value||"disk", inner=Math.max(0,Number($("inner")?.value||0));
+    traces=[{x:X,y,mode:"lines",name:"Radio exterior R(x)",line:{width:3}}];
+    if(mode==="washer") traces.push({x:X,y:X.map(()=>inner),mode:"lines",name:"Radio interior r(x)",line:{dash:"dash",width:2}});
+    if(mode!=="shell") traces.push({x:X,y:y.map(v=>v===null?null:Math.PI*(v*v-(mode==="washer"?inner*inner:0))),mode:"lines",name:"Área del corte π(R²−r²)",line:{dash:"dot",width:2},yaxis:"y2"});
+    layout.title=mode==="shell"?"2D · capas cilíndricas alrededor del eje y":mode==="washer"?"2D · arandelas perpendiculares al eje x":"2D · discos perpendiculares al eje x";
+    layout.yaxis={title:"Radio / altura",zeroline:true};
+    if(mode!=="shell") layout.yaxis2={title:"Área del corte",overlaying:"y",side:"right",showgrid:false};
+    cap.textContent=mode==="shell"?"La curva muestra la altura f(x) y el radio x de cada capa cilíndrica. La vista 3D representa una capa representativa que gira alrededor del eje y.":"La gráfica 2D muestra la región generadora y sus radios; la vista 3D representa la superficie de revolución correspondiente.";
   }
   Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
 }
