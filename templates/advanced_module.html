@@ -181,7 +181,6 @@ async function drawConceptDiagram(){
       }else{const xx=[],yy=[],zz=[];for(let i=0;i<xs.length;i++){xx.push(theta.map(()=>xs[i]));yy.push(theta.map(t=>vals[i]*Math.cos(t)));zz.push(theta.map(t=>vals[i]*Math.sin(t)));}traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.9,name:"Sólido de revolución"}];layout={title:method==="washer"?"3D · sólido con arandelas":"3D · sólido con discos",paper_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje de giro x"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}};}
     }
     Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});return;
-  }
   }else if(moduleNumber===8){
     traces=[];
     layout.title="Fracciones parciales · descomposición de una fracción";
@@ -196,15 +195,13 @@ async function drawConceptDiagram(){
     traces=[{x:X,y:X.map(Math.sin),mode:"lines",name:"sen x"},{x:X,y:X.map(Math.cos),mode:"lines",name:"cos x"}];
     layout.title="Funciones seno y coseno · periodo 2π";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"valor"};
   }else if(moduleNumber===11){
-    traces=[{x:[0,1.5,1.5,0],y:[0,0,Math.sqrt(6.75),0],mode:"lines+markers",fill:"toself",name:"Triángulo de referencia",line:{width:3} }];
+    traces=[{x:[0,Math.sqrt(6.75),0,0],y:[0,0,1.5,0],mode:"lines+markers",fill:"toself",name:"Triángulo de referencia",line:{width:3}}];
     layout.title="Triángulo rectángulo · x = 3 sen θ";layout.xaxis={title:"cateto adyacente"};layout.yaxis={title:"cateto opuesto"};
-    layout.annotations=[{x:.75,y:0,text:"x",showarrow:false,yshift:-16},{x:1.5,y:1.3,text:"√(9−x²)",showarrow:false,xshift:42},{x:.75,y:1.3,text:"3",showarrow:false}];
+    layout.annotations=[{x:0,y:.75,text:"x",showarrow:false,xshift:-14},{x:1.3,y:0,text:"√(9−x²)",showarrow:false,yshift:-16},{x:.8,y:.85,text:"3",showarrow:false}];
   }else if(moduleNumber===12){
-    const X=makeX(0,Math.PI*1.96,180);
-    traces=[{x:X,y:X.map(v=>Math.tan(v/2)),mode:"lines",name:"t = tan(x/2)"}];
-    layout.title="Sustitución universal · variable t = tan(x/2)";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"t"};
-    layout.shapes=[{type:"line",x0:Math.PI,x1:Math.PI,y0:-8,y1:8,line:{dash:"dash",color:"#ef4444"}}];
-    layout.annotations=[{x:Math.PI,y:6,text:"Asíntota en x = π",showarrow:true,arrowhead:2}];
+    const T=makeX(-5,5,180);
+    traces=[{x:T,y:T.map(t=>2*t/(1+t*t)),mode:"lines",name:"sen x = 2t/(1+t²)"},{x:T,y:T.map(t=>(1-t*t)/(1+t*t)),mode:"lines",name:"cos x = (1−t²)/(1+t²)"},{x:T,y:T.map(t=>2/(1+t*t)),mode:"lines",name:"dx/dt = 2/(1+t²)",line:{dash:"dash"}}];
+    layout.title="Sustitución universal · expresiones racionales en t";layout.xaxis={title:"t = tan(x/2)"};layout.yaxis={title:"Valor"};
   }else return;
   Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});
 }
