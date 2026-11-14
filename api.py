@@ -83,8 +83,15 @@ def sample():
         import numpy as np
         fn=sp.lambdify(x,expr,modules=["numpy"])
         xs=np.asarray(values,dtype=float)
-        ys=np.asarray(fn(xs),dtype=float)
-        ys=[float(v) if np.isfinite(v) else None for v in ys]
+        with np.errstate(all="ignore"):
+            raw=fn(xs)
+            raw=np.asarray(raw)
+            if raw.ndim==0:
+                raw=np.full(xs.shape,raw.item())
+            raw=np.broadcast_to(raw,xs.shape)
+            if np.iscomplexobj(raw):
+                raw=np.where(np.abs(np.imag(raw))<1e-10,np.real(raw),np.nan)
+            ys=[float(v) if np.isfinite(v) else None for v in np.asarray(raw,dtype=float).reshape(-1)]
         anti=sp.integrate(expr,x)
         return jsonify({"ok":True,"normalized":str(expr),"latex":sp.latex(expr),"y":ys,
                         "antiderivative":str(anti),"antiderivative_latex":sp.latex(anti)})
