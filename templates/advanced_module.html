@@ -172,19 +172,24 @@ async function drawMainGraph(expression,A,B){
       caption.textContent="La línea continua representa el lado o diámetro de cada sección; la discontinua representa el área transversal A(x).";
     }else if(moduleNumber===14){
       const mode=$("method").value;
-      traces=[{x:s.x,y:s.y,type:"scatter",mode:"lines",name:mode==="shell"?"Altura f(x)":"Radio exterior R(x)",line:{width:3}}];
+      const innerExpr=$("inner").value||"0";
+      const innerSamples=mode==="washer"?await getSamples(innerExpr,A,B):null;
+      const innerValues=innerSamples?innerSamples.y.map(v=>v===null?null:Math.abs(v)):s.x.map(()=>0);
+      traces=[{x:s.x,y:s.y.map(v=>v===null?null:Math.abs(v)),type:"scatter",mode:"lines",name:mode==="shell"?"Altura f(x)":"Radio exterior R(x)",line:{width:3}}];
       if(mode==="washer"){
-        const inner=Number($("inner").value||0);
-        traces.push({x:s.x,y:s.x.map(()=>inner),type:"scatter",mode:"lines",name:"Radio interior r(x)",line:{dash:"dash"}});
+        traces.push({x:s.x,y:innerValues,type:"scatter",mode:"lines",name:"Radio interior r(x)",line:{dash:"dash"}});
       }
       if(mode!=="shell"){
-        const inner=mode==="washer"?Number($("inner").value||0):0;
-        traces.push({x:s.x,y:s.y.map(v=>v===null?null:Math.PI*(v*v-inner*inner)),type:"scatter",mode:"lines",name:"Área del corte",yaxis:"y2",line:{dash:"dot"}});
+        traces.push({x:s.x,y:s.y.map((v,i)=>v===null||innerValues[i]===null?null:Math.PI*(v*v-innerValues[i]*innerValues[i])),type:"scatter",mode:"lines",name:"Área del corte",yaxis:"y2",line:{dash:"dot"}});
         layout.yaxis2={title:"Área del disco/arandela",overlaying:"y",side:"right",showgrid:false};
+      }else{
+        const k=Math.floor(s.x.length*.55),x0=s.x[k],height=s.y[k]===null?0:Math.abs(s.y[k]);
+        layout.shapes=[{type:"line",x0:0,x1:x0,y0:0,y1:0,line:{color:"#0d9488",width:4}},{type:"line",x0:x0,x1:x0,y0:0,y1:height,line:{color:"#d97706",width:4}}];
+        layout.annotations=[{x:x0/2,y:0,text:"radio = x",showarrow:false,yshift:-18},{x:x0,y:height/2,text:"altura = f(x)",showarrow:false,xshift:55}];
       }
       layout.title=mode==="shell"?"Capas cilíndricas · radio x y altura f(x)":mode==="washer"?"Arandelas · radios exterior e interior":"Discos · radio R(x)";
       layout.yaxis.title=mode==="shell"?"Altura f(x)":"Radio";
-      caption.textContent=mode==="shell"?"El radio de cada capa es x y su altura es f(x). La gráfica 3D muestra una capa representativa.":"La gráfica 2D muestra el radio exterior y, cuando corresponde, el radio interior; el área del corte se calcula aparte.";
+      caption.textContent=mode==="shell"?"El radio de la capa es x (distancia al eje y) y su altura es |f(x)|. La gráfica marca una capa representativa.":"La gráfica 2D muestra el radio exterior y, en arandelas, el radio interior g(x); la tercera curva muestra el área de cada corte.";
     }
     await Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
   }catch(error){showGraphError("plot",error);}
@@ -269,14 +274,15 @@ async function drawMethodDiagram(){
         layout={title:"3D · elemento de capa cilíndrica alrededor del eje y",paper_bgcolor:"rgba(0,0,0,0)",font:{color:fontColor()},margin:{l:0,r:0,t:55,b:0},
           scene:{xaxis:{title:"x"},yaxis:{title:"altura"},zaxis:{title:"z"},aspectmode:"data"}};
       }else{
-        const inner=mode==="washer"?Math.max(0,Number($("inner").value||0)):0;
+        const innerSamples=mode==="washer"?await getSamples($("inner").value||"0",A,B,44):null;
+        const innerRadii=innerSamples?innerSamples.y.map(v=>v===null?0:Math.max(0,Math.abs(v))):s.x.map(()=>0);
         const xx=[],yy=[],zz=[],ix=[],iy=[],iz=[];
         for(let i=0;i<s.x.length;i++){
           xx.push(theta.map(()=>s.x[i]));yy.push(theta.map(t=>radii[i]*Math.cos(t)));zz.push(theta.map(t=>radii[i]*Math.sin(t)));
-          ix.push(theta.map(()=>s.x[i]));iy.push(theta.map(t=>inner*Math.cos(t)));iz.push(theta.map(t=>inner*Math.sin(t)));
+          ix.push(theta.map(()=>s.x[i]));iy.push(theta.map(t=>innerRadii[i]*Math.cos(t)));iz.push(theta.map(t=>innerRadii[i]*Math.sin(t)));
         }
         traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.88,name:"Superficie exterior"}];
-        if(mode==="washer"&&inner>0)traces.push({type:"surface",x:ix,y:iy,z:iz,colorscale:"Greys",showscale:false,opacity:.65,name:"Superficie interior"});
+        if(mode==="washer"&&innerRadii.some(v=>v>0))traces.push({type:"surface",x:ix,y:iy,z:iz,colorscale:"Greys",showscale:false,opacity:.65,name:"Superficie interior"});
         layout={title:mode==="washer"?"3D · sólido hueco generado por arandelas":"3D · sólido generado por discos",paper_bgcolor:"rgba(0,0,0,0)",font:{color:fontColor()},margin:{l:0,r:0,t:55,b:0},
           scene:{xaxis:{title:"Eje de giro x"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}};
       }
@@ -312,8 +318,19 @@ async function calculateVolume(){
       description=shape==="square"?"A(x)=s(x)²":shape==="semicircle"?"A(x)=πd(x)²/8":"A(x)=√3s(x)²/4";
     }else{
       const mode=$("method").value;
-      if(mode==="shell"){integrand="2*pi*x*("+f+")";description="dV=2π·radio·altura·dx";}
-      else if(mode==="washer"){const inner=$("inner").value||"0";integrand="pi*(("+f+")^2-("+inner+")^2)";description="A(x)=π(R(x)²−r(x)²)";}
+      if(mode==="shell"){
+        if(A<0)throw new Error("Para capas cilíndricas alrededor del eje y, usa límites x no negativos; el radio es x.");
+        integrand="2*pi*x*abs("+f+")";description="dV=2π·radio·altura·dx";
+      }
+      else if(mode==="washer"){
+        const inner=$("inner").value||"0",xs=makeX(A,B,80);
+        const outer=(await sampleFormula(f,xs)).y,inside=(await sampleFormula(inner,xs)).y;
+        for(let i=0;i<xs.length;i++){
+          if(outer[i]===null||inside[i]===null)throw new Error("El radio interior o exterior no está definido en todo el intervalo.");
+          if(Math.abs(inside[i])>Math.abs(outer[i])+1e-7)throw new Error("El radio interior g(x) no puede ser mayor que el radio exterior f(x).");
+        }
+        integrand="pi*(("+f+")^2-("+inner+")^2)";description="A(x)=π(R(x)²−r(x)²)";
+      }
       else{integrand="pi*("+f+")^2";description="A(x)=πR(x)²";}
     }
     const result=await integrateFormula(integrand,A,B),numeric=Number(result.numeric);
