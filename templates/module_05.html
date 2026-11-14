@@ -14,8 +14,7 @@ async function draw(){
       const g=await sampleFormula(second,x);
       traces=[
         {x,y:c.y,mode:"lines",name:"f(x)",line:{width:3}},
-        {x,y:g.y,mode:"lines",name:"g(x)",line:{width:3}},
-        {x,y:g.y,fill:"tonexty",mode:"none",name:"Región entre curvas"}
+        {x,y:g.y,mode:"lines",name:"g(x)",line:{width:3},fill:"tonexty",fillcolor:"rgba(37,99,235,0.18)"}
       ];
       integrand="abs(("+e+")-("+second+"))";
       title="Área entre dos curvas";
