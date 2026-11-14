@@ -28,6 +28,8 @@ try {
         const el = document.querySelector("#result");
         return Boolean(el && el.textContent.trim().length > 0);
       });
+      const traces = await page.locator("#plot").evaluate(el => el.data || []);
+      if (traces.length < 2) throw new Error(`Módulo ${module}: la gráfica no contiene las trazas esperadas.`);
       console.log(`OK módulo ${module}: gráfico 2D y resultado calculado`);
       continue;
     }
@@ -36,6 +38,8 @@ try {
         const el = document.querySelector("#solverResult");
         return Boolean(el && el.textContent.trim().length > 0);
       });
+      const names = await page.locator("#plot").evaluate(el => (el.data || []).map(trace => trace.name));
+      if (!names.includes("f(x)") || !names.includes("F(x)")) throw new Error("Módulo 6: deben aparecer f(x) y F(x).");
       console.log("OK módulo 6: gráficas de f(x), F(x) y solucionador");
       continue;
     }
@@ -58,10 +62,23 @@ try {
     }
 
     if (module === 14) {
+      await page.locator("#expr").fill("x+2");
+      await page.locator("#a").fill("0");
+      await page.locator("#b").fill("2");
+      await page.locator("#inner").fill("x");
       await page.locator("#method").selectOption("washer");
+      await page.locator("button[onclick='calculateVolume()']").click();
       await page.waitForFunction(() => document.querySelector("#methodDiagram")?._fullLayout?.scene);
       let types = await page.locator("#methodDiagram").evaluate(el => (el.data || []).map(t => t.type));
       if (!types.includes("surface")) throw new Error("Módulo 14: no se renderizó el sólido 3D de arandelas.");
+      const innerTrace = await page.locator("#plot").evaluate(el => el.data.find(t => t.name === "Radio interior r(x)")?.y);
+      if (!innerTrace || Math.abs(innerTrace[0]) > 1e-6 || Math.abs(innerTrace.at(-1) - 2) > 1e-5) {
+        throw new Error("Módulo 14: la gráfica no interpretó g(x)=x como radio interior variable.");
+      }
+      await page.locator("#inner").fill("x+3");
+      await page.locator("button[onclick='calculateVolume()']").click();
+      await page.waitForFunction(() => document.querySelector("#result")?.textContent.includes("radio interior"));
+      await page.locator("#inner").fill("x");
       await page.locator("#method").selectOption("shell");
       await page.waitForFunction(() => document.querySelector("#methodDiagram")?._fullLayout?.scene);
       types = await page.locator("#methodDiagram").evaluate(el => (el.data || []).map(t => t.type));
@@ -74,7 +91,7 @@ try {
   }
 
   if (failures.length) throw new Error("Errores JavaScript del navegador: " + failures.join(" | "));
-  console.log("OK: sin errores JavaScript no controlados en los módulos 7–14.");
+  console.log("OK: sin errores JavaScript no controlados en los módulos 1–14.");
 } finally {
   await browser.close();
 }
