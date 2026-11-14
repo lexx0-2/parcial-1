@@ -88,7 +88,7 @@
   {{ extra|safe }}
   <div id="result" class="result-panel">Introduce los datos y pulsa calcular.</div>
   <div id="plot" class="plot"></div>
-  <div id="methodDiagram" class="plot"></div>
+  {% if number != 7 %}<div id="methodDiagram" class="plot"></div>{% endif %}
   <p class="plot-caption" id="plotCaption"></p>
 </section>
 
@@ -204,12 +204,21 @@ async function drawMethodDiagram(){
       layout.annotations=[{x:1.5,y:2.7,text:"∫u dv = uv − ∫v du",showarrow:false}];
       layout.xaxis={visible:false};layout.yaxis={visible:false};
     }else if(moduleNumber===8){
-      traces=[{x:[0,1,2,3],y:[1,1,1,1],mode:"lines",name:"P(x)/Q(x)"},
-              {x:[0,1,2,3],y:[.5,.5,.5,.5],mode:"lines",name:"Término A/(x−r₁)",line:{dash:"dash"}},
-              {x:[0,1,2,3],y:[.5,.5,.5,.5],mode:"lines",name:"Término B/(x−r₂)",line:{dash:"dot"}}];
-      layout.title="Fracciones parciales · separar en términos simples";
-      layout.annotations=[{x:1.5,y:1.25,text:"Factorizar Q(x) → hallar constantes → integrar",showarrow:false}];
-      layout.yaxis={visible:false};layout.xaxis={visible:false};
+      traces=[];
+      layout.title="Descomposición en fracciones parciales";
+      layout.xaxis={visible:false,range:[0,10]};layout.yaxis={visible:false,range:[0,5]};
+      layout.shapes=[
+        {type:"rect",x0:.4,y0:1.5,x1:3.1,y1:3.3,line:{color:"#2563eb",width:2},fillcolor:"rgba(37,99,235,.14)"},
+        {type:"rect",x0:6.5,y0:2.7,x1:9.3,y1:3.8,line:{color:"#0d9488",width:2},fillcolor:"rgba(13,148,136,.14)"},
+        {type:"rect",x0:6.5,y0:.8,x1:9.3,y1:1.9,line:{color:"#d97706",width:2},fillcolor:"rgba(217,119,6,.14)"}
+      ];
+      layout.annotations=[
+        {x:1.75,y:2.4,text:"P(x) / Q(x)",showarrow:false,font:{size:18}},
+        {x:4.8,y:2.4,text:"=",showarrow:false,font:{size:24}},
+        {x:7.9,y:3.25,text:"A / (x − r₁)",showarrow:false},
+        {x:7.9,y:1.35,text:"B / (x − r₂)",showarrow:false},
+        {x:4.8,y:.25,text:"Factorizar → descomponer → integrar",showarrow:false}
+      ];
     }else if(moduleNumber===9){
       const X=[0,1,2,3,4];
       traces=[{x:X,y:X.map(Math.sqrt),mode:"lines+markers",name:"√x"},
