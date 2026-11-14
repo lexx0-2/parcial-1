@@ -77,6 +77,16 @@ class CalculationRegressionTests(unittest.TestCase):
         self.integrate("1/sqrt(9-x^2)", 0, 2, math.asin(2/3))                   # trig substitution
         self.integrate("1/(1+cos(x))", 0, 2, math.tan(1))                       # universal substitution
 
+    def test_module_5_area_between_curves(self):
+        self.integrate("abs(x-x^2)", 0, 1, 1/6)
+
+    def test_parse_verifies_the_derivative_of_the_antiderivative(self):
+        response = self.client.post("/api/parse", json={"expression": "(x-1)(x+1)"})
+        self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+        payload = response.get_json()
+        self.assertTrue(payload["verification"])
+        self.assertEqual(payload["antiderivative_derivative_latex"], "x^{2} - 1")
+
     def test_cross_section_volume_formulas(self):
         self.integrate("x^2", 0, 2, 8/3)                                       # square, side x
         self.integrate("pi*2^2/8", 0, 3, 3*math.pi/2)                           # semicircle, diameter 2
