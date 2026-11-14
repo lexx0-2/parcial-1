@@ -242,6 +242,6 @@ async function calculateVolume(){
     await drawMethod(f,A,B);drawConceptDiagram();renderFormula();
   }catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>";}
 }
-window.addEventListener("load",()=>{if(moduleNumber===13||moduleNumber===14){const btn=document.querySelector("button[onclick='calculateVolume()']");if(btn)btn.addEventListener("click",()=>{});}calculate();});
+window.addEventListener("load",()=>{if(moduleNumber===13||moduleNumber===14){$("method")?.addEventListener("change",calculateVolume);$("shape")?.addEventListener("change",calculateVolume);$("inner")?.addEventListener("change",calculateVolume);calculateVolume();}else{calculate();}});
 </script>
 {% endblock %}
