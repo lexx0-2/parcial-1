@@ -50,9 +50,11 @@ try {
     }
     if (module === 6) {
       await page.waitForFunction(() => {
-        const el = document.querySelector("#solverResult");
-        return Boolean(el && el.textContent.trim().length > 0);
-      });
+        const text = document.querySelector("#solverResult")?.textContent || "";
+        return text.includes("La derivada de la antiderivada coincide") ||
+               text.includes("La comprobación simbólica no fue concluyente") ||
+               text.includes("error");
+      }, null, { timeout: 15000 });
       const names = await page.locator("#plot").evaluate(el => (el.data || []).map(trace => trace.name));
       if (!names.includes("f(x)") || !names.includes("F(x)")) throw new Error("Módulo 6: deben aparecer f(x) y F(x).");
       const solver = await page.locator("#solverResult").evaluate(el => el.innerHTML);
