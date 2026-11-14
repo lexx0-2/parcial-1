@@ -28,8 +28,23 @@ try {
         const el = document.querySelector("#result");
         return Boolean(el && el.textContent.trim().length > 0);
       });
-      const traces = await page.locator("#plot").evaluate(el => el.data || []);
+      let traces = await page.locator("#plot").evaluate(el => el.data || []);
       if (traces.length < 2) throw new Error(`Módulo ${module}: la gráfica no contiene las trazas esperadas.`);
+      if (module === 5) {
+        await page.locator("#expr").fill("x");
+        await page.locator("#secondExpr").fill("x^2");
+        await page.locator("#a").fill("0");
+        await page.locator("#b").fill("1");
+        await page.locator("button[onclick='draw()']").click();
+        await page.waitForFunction(() => document.querySelector("#result")?.textContent.includes("Área geométrica entre f(x) y g(x)"));
+        traces = await page.locator("#plot").evaluate(el => el.data || []);
+        const betweenCurves = traces.find(trace => trace.name === "g(x)");
+        if (!traces.some(trace => trace.name === "f(x)") || !betweenCurves || betweenCurves.fill !== "tonexty") {
+          throw new Error("Módulo 5: la región entre f(x) y g(x) no quedó representada.");
+        }
+        const shown = await page.locator("#result").innerText();
+        if (!shown.includes("0.16666667")) throw new Error("Módulo 5: el área entre x y x² no coincide con 1/6. Resultado: " + shown);
+      }
       console.log(`OK módulo ${module}: gráfico 2D y resultado calculado`);
       continue;
     }
@@ -40,7 +55,11 @@ try {
       });
       const names = await page.locator("#plot").evaluate(el => (el.data || []).map(trace => trace.name));
       if (!names.includes("f(x)") || !names.includes("F(x)")) throw new Error("Módulo 6: deben aparecer f(x) y F(x).");
-      console.log("OK módulo 6: gráficas de f(x), F(x) y solucionador");
+      const solver = await page.locator("#solverResult").evaluate(el => el.innerHTML);
+      if (!solver.includes("x^{2} - 1") || !solver.includes("La derivada de la antiderivada coincide")) {
+        throw new Error("Módulo 6: la verificación no muestra la derivada correcta de la primitiva.");
+      }
+      console.log("OK módulo 6: gráficas de f(x), F(x), solucionador y verificación correcta");
       continue;
     }
 
