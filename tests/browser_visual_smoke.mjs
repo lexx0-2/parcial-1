@@ -71,9 +71,17 @@ try {
       await page.waitForFunction(() => document.querySelector("#methodDiagram")?._fullLayout?.scene);
       let types = await page.locator("#methodDiagram").evaluate(el => (el.data || []).map(t => t.type));
       if (!types.includes("surface")) throw new Error("Módulo 14: no se renderizó el sólido 3D de arandelas.");
-      const innerTrace = await page.locator("#plot").evaluate(el => el.data.find(t => t.name === "Radio interior r(x)")?.y);
+      await page.waitForFunction(() => {
+        const plot = document.querySelector("#plot");
+        return Boolean(plot?._fullLayout?.title?.text?.includes("Arandelas"));
+      }, null, { timeout: 15000 });
+      const innerTrace = await page.locator("#plot").evaluate(el => {
+        const trace = (el.data || []).find(t => t.name === "Radio interior r(x)");
+        return trace ? Array.from(trace.y) : null;
+      });
+      console.log("Módulo 14 · muestras del radio interior:", JSON.stringify(innerTrace?.slice(0, 3)), JSON.stringify(innerTrace?.slice(-3)));
       if (!innerTrace || Math.abs(innerTrace[0]) > 1e-6 || Math.abs(innerTrace.at(-1) - 2) > 1e-5) {
-        throw new Error("Módulo 14: la gráfica no interpretó g(x)=x como radio interior variable.");
+        throw new Error("Módulo 14: g(x)=x no apareció como radio interior variable. Muestras: " + JSON.stringify(innerTrace));
       }
       await page.locator("#inner").fill("x+3");
       await page.locator("button[onclick='calculateVolume()']").click();
