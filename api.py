@@ -68,9 +68,13 @@ def parse():
         expr=parse_expression(expression)
         anti=sp.integrate(expr,x)
         der=sp.diff(expr,x)
+        antiderivative_derivative=sp.diff(anti,x)
+        verified=sp.simplify(antiderivative_derivative-expr)==0
         return jsonify({"ok":True,"normalized":str(expr),"latex":sp.latex(expr),
                         "antiderivative":str(anti),"antiderivative_latex":sp.latex(anti),
-                        "derivative":str(der),"derivative_latex":sp.latex(der)})
+                        "derivative":str(der),"derivative_latex":sp.latex(der),
+                        "antiderivative_derivative_latex":sp.latex(antiderivative_derivative),
+                        "verification":bool(verified)})
     except Exception as exc:
         return jsonify({"ok":False,"error":f"No se pudo interpretar la fórmula: {exc}"}),400
 
