@@ -88,6 +88,7 @@
   {{ extra|safe }}
   <div id="result" class="result-panel">Introduce los datos y pulsa calcular.</div>
   <div id="plot" class="plot"></div>
+  <div id="methodDiagram" class="plot"></div>
   <p class="plot-caption" id="plotCaption"></p>
 </section>
 
@@ -169,6 +170,35 @@ async function drawMethod(e,A,B) {
   }
   Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
 }
+function drawConceptDiagram(){
+  const el=$("methodDiagram"); if(!el)return;
+  const dark=document.documentElement.classList.contains("dark"), color=dark?"#e5e7eb":"#172033";
+  let traces=[],layout={title:"Esquema del método",paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:35,r:25,t:55,b:35},showlegend:false};
+  if(moduleNumber===7){
+    traces=[{type:"bar",x:["u·v","u·dv","v·du","diferencial"],y:[4,2,2,1],text:["Producto","u dv","v du","d(uv)"],textposition:"inside",marker:{color:["#2563eb","#0d9488","#d97706","#94a3b8"]}}];
+    layout.title="Integración por partes · relación con la regla del producto";layout.yaxis={visible:false};
+  }else if(moduleNumber===8){
+    traces=[{type:"bar",orientation:"h",x:[4,2,2],y:["P(x)/Q(x)","A/(x−r₁)","B/(x−r₂)"],text:["Fracción racional","Primer término","Segundo término"],textposition:"inside",marker:{color:["#2563eb","#0d9488","#d97706"]}}];
+    layout.title="Fracciones parciales · separar en términos simples";layout.xaxis={visible:false};layout.yaxis={automargin:true};
+  }else if(moduleNumber===9){
+    traces=[{x:[0,1,2,3,4],y:[0,1,Math.sqrt(2),Math.sqrt(3),2],mode:"lines+markers",name:"√x"},{x:[0,1,2,3,4],y:[0,1,Math.pow(2,.5),Math.pow(3,.5),2],mode:"markers",name:"x^(1/2)"}];
+    layout.title="Radical y potencia fraccionaria · √x = x^(1/2)";layout.xaxis={title:"x"};layout.yaxis={title:"valor"};
+  }else if(moduleNumber===10){
+    const X=makeX(0,2*Math.PI,160);
+    traces=[{x:X,y:X.map(Math.sin),mode:"lines",name:"sen x"},{x:X,y:X.map(Math.cos),mode:"lines",name:"cos x"}];
+    layout.title="Funciones seno y coseno · periodo 2π";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"valor"};
+  }else if(moduleNumber===11){
+    traces=[{x:[0,3,3,0],y:[0,0,Math.sqrt(5.25),0],mode:"lines+markers",fill:"toself",name:"Triángulo de referencia",line:{width:3} }];
+    layout.title="Triángulo rectángulo · x = 3 sen θ";layout.xaxis={title:"cateto adyacente"};layout.yaxis={title:"cateto opuesto"};
+    layout.annotations=[{x:1.5,y:0,text:"x",showarrow:false,yshift:-16},{x:3,y:1.15,text:"√(9−x²)",showarrow:false,xshift:42},{x:1.5,y:1.65,text:"3",showarrow:false}];
+  }else if(moduleNumber===12){
+    const X=makeX(0,2*Math.PI,180);
+    traces=[{x:X,y:X.map(Math.cos),mode:"lines",name:"cos x"},{x:X,y:X.map(Math.sin),mode:"lines",name:"sen x"}];
+    layout.title="Ángulo mitad · t = tan(x/2)";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"sen x / cos x"};
+    layout.annotations=[{x:Math.PI/2,y:1,text:"t = tan(x/2)",showarrow:true,arrowhead:2}];
+  }else return;
+  Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});
+}
 async function calculate(){
   const box=$("result");
   try{
@@ -182,7 +212,7 @@ async function calculate(){
     html+="<p><b>Valor numérico:</b> "+Number(q.numeric).toPrecision(10)+"</p>";
     html+="<p class='notice'>Comprueba que la función sea continua en el intervalo y que los límites estén dentro de su dominio.</p>";
     box.innerHTML=html;
-    await drawMethod(e,A,B);renderFormula();
+    await drawMethod(e,A,B);drawConceptDiagram();renderFormula();
   }catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>";}
 }
 async function calculateVolume(){
@@ -203,7 +233,7 @@ async function calculateVolume(){
     }
     const q=await integrateFormula(g,A,B);
     box.innerHTML="<b>1. Área o elemento de volumen:</b><div class='formula'>"+description+"</div><b>2. Integral planteada:</b><div class='formula'>\\[V=\\int_{"+A+"}^{"+B+"}("+g+")\\,dx\\]</div><b>3. Resultado:</b><p>V = <b>"+Number(q.numeric).toPrecision(10)+"</b> unidades cúbicas</p>";
-    await drawMethod(f,A,B);renderFormula();
+    await drawMethod(f,A,B);drawConceptDiagram();renderFormula();
   }catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>";}
 }
 window.addEventListener("load",()=>{if(moduleNumber===13||moduleNumber===14){const btn=document.querySelector("button[onclick='calculateVolume()']");if(btn)btn.addEventListener("click",()=>{});}calculate();});
