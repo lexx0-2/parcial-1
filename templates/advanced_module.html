@@ -164,8 +164,8 @@ async function calculate(){
     box.textContent="Calculando…";
     const parsed=await processFormula(e), q=await integrateFormula(e,A,B);
     let html="<b>1. Integrando interpretado:</b><div class='formula'>\\["+parsed.latex+"\\]</div>";
-    html+="<b>2. Primitiva obtenida:</b><div class='formula'>\\["+q.latex+"\\]</div>";
-    html+="<b>3. Evaluación en los límites:</b><div class='formula'>\\["+q.latex+"\\]</div>";
+    html+="<b>2. Primitiva obtenida:</b><div class='formula'>\\["+parsed.antiderivative_latex+"+C\\]</div>";
+    html+="<b>3. Evaluación F(b) − F(a):</b><div class='formula'>\\["+q.latex+"\\]</div>";
     html+="<p><b>Valor numérico:</b> "+Number(q.numeric).toPrecision(10)+"</p>";
     html+="<p class='notice'>Comprueba que la función sea continua en el intervalo y que los límites estén dentro de su dominio.</p>";
     box.innerHTML=html;
