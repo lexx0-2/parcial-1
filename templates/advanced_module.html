@@ -148,17 +148,19 @@ async function drawMethod(e,A,B) {
     cap.textContent=mode==="shell"?"Capas cilíndricas: cada capa tiene radio x, altura f(x) y circunferencia 2πx.":"Discos/arandelas: la región gira alrededor del eje x y forma una superficie de revolución.";
     if(mode!=="shell"){
       const theta=Array.from({length:45},(_,j)=>2*Math.PI*j/44);
-      const outerY=[],outerZ=[],innerY=[],innerZ=[];
+      const outerX=[],outerY=[],outerZ=[],innerX=[],innerY=[],innerZ=[];
       const inner=mode==="washer"?Math.max(0,Number($("inner").value||0)):0;
       for(let i=0;i<X.length;i++){
         const radius=Math.max(0,Math.abs(y[i]));
+        outerX.push(theta.map(()=>X[i]));
         outerY.push(theta.map(t=>radius*Math.cos(t)));
         outerZ.push(theta.map(t=>radius*Math.sin(t)));
+        innerX.push(theta.map(()=>X[i]));
         innerY.push(theta.map(t=>inner*Math.cos(t)));
         innerZ.push(theta.map(t=>inner*Math.sin(t)));
       }
-      const surfaces=[{type:"surface",x:X,y:outerY,z:outerZ,colorscale:"Blues",showscale:false,opacity:.88,name:"Superficie exterior"}];
-      if(mode==="washer"&&inner>0) surfaces.push({type:"surface",x:X,y:innerY,z:innerZ,colorscale:"Greys",showscale:false,opacity:.55,name:"Superficie interior"});
+      const surfaces=[{type:"surface",x:outerX,y:outerY,z:outerZ,colorscale:"Blues",showscale:false,opacity:.88,name:"Superficie exterior"}];
+      if(mode==="washer"&&inner>0) surfaces.push({type:"surface",x:innerX,y:innerY,z:innerZ,colorscale:"Greys",showscale:false,opacity:.55,name:"Superficie interior"});
       Plotly.newPlot("plot",surfaces,{title:layout.title,paper_bgcolor:"rgba(0,0,0,0)",font:layout.font,margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje de giro (x)"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}},{responsive:true,displaylogo:false});
       return;
     }
