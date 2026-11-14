@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import re
+import math
 import sympy as sp
 
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -55,7 +56,10 @@ def parse_expression(expression: str):
 
 def finite_float(value):
     n=sp.N(value,16)
-    return float(n) if n.is_real else str(n)
+    if not n.is_real:
+        return str(n)
+    value = float(n)
+    return value if math.isfinite(value) else str(n)
 
 @bp.post("/parse")
 def parse():
@@ -80,7 +84,7 @@ def sample():
         fn=sp.lambdify(x,expr,modules=["numpy"])
         xs=np.asarray(values,dtype=float)
         ys=np.asarray(fn(xs),dtype=float)
-        ys=np.where(np.isfinite(ys),ys,np.nan)
+        ys=np.where(np.isfinite(ys),ys,None)
         anti=sp.integrate(expr,x)
         return jsonify({"ok":True,"normalized":str(expr),"latex":sp.latex(expr),"y":ys.tolist(),
                         "antiderivative":str(anti),"antiderivative_latex":sp.latex(anti)})
