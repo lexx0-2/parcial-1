@@ -84,7 +84,7 @@ def sample():
         fn=sp.lambdify(x,expr,modules=["numpy"])
         xs=np.asarray(values,dtype=float)
         ys=np.asarray(fn(xs),dtype=float)
-        ys=np.where(np.isfinite(ys),ys,None)
+        ys=[float(v) if np.isfinite(v) else None for v in ys]
         anti=sp.integrate(expr,x)
         return jsonify({"ok":True,"normalized":str(expr),"latex":sp.latex(expr),"y":ys.tolist(),
                         "antiderivative":str(anti),"antiderivative_latex":sp.latex(anti)})
