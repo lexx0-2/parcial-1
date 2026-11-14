@@ -56,8 +56,23 @@ try {
       const names = await page.locator("#plot").evaluate(el => (el.data || []).map(trace => trace.name));
       if (!names.includes("f(x)") || !names.includes("F(x)")) throw new Error("Módulo 6: deben aparecer f(x) y F(x).");
       const solver = await page.locator("#solverResult").evaluate(el => el.innerHTML);
-      if (!solver.includes("x^{2} - 1") || !solver.includes("La derivada de la antiderivada coincide")) {
-        throw new Error("Módulo 6: la verificación no muestra la derivada correcta de la primitiva.");
+      const parseCheck = await page.evaluate(async () => {
+        const response = await fetch("/api/parse", {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({expression:"(x-1)(x+1)"})
+        });
+        return await response.json();
+      });
+      console.log("Módulo 6 · HTML del solucionador:", solver);
+      console.log("Módulo 6 · comprobación API:", JSON.stringify({
+        verification: parseCheck.verification,
+        derivative: parseCheck.antiderivative_derivative_latex
+      }));
+      if (!parseCheck.verification || parseCheck.antiderivative_derivative_latex !== "x^{2} - 1") {
+        throw new Error("Módulo 6: el motor no devolvió la derivada correcta de la primitiva.");
+      }
+      if (!solver.includes("La derivada de la antiderivada coincide")) {
+        throw new Error("Módulo 6: la interfaz no muestra el mensaje de verificación.");
       }
       console.log("OK módulo 6: gráficas de f(x), F(x), solucionador y verificación correcta");
       continue;
