@@ -1,4 +1,198 @@
-{% extends "base.html" %}{% block content %}<section class="content-card"><span class="number">Módulo {{ number }}</span><h2>{{ title }}</h2><p>{{ theory }}</p><div class="formula">\[{{ formula }}\]</div><p>{{ explanation }}</p></section><section class="content-card"><h3>Calculadora interactiva</h3><div class="controls"><label>Función f(x)<input id="expr" value="{{ default_expr }}"></label><label>Límite inferior a<input id="a" type="number" step="any" value="0"></label><label>Límite superior b<input id="b" type="number" step="any" value="2"></label><button onclick="calculate()">Calcular</button></div>{{ extra|safe }}<div id="result" class="result-panel">Introduce los datos y pulsa calcular.</div><div id="plot" class="plot"></div></section><section class="content-card"><h3>Ejemplos resueltos</h3>{% for e in examples %}<div class="example">{{ e|safe }}</div>{% endfor %}</section><script>
-async function calculate(){const box=document.getElementById("result");box.textContent="Calculando...";try{let e=expr.value,A=Number(a.value),B=Number(b.value),p=await processFormula(e),q=await integrateFormula(e,A,B);box.innerHTML="<b>Integral definida:</b><div class='formula'>\\["+q.latex+"\\]</div><p>Valor aproximado: "+Number(q.numeric).toPrecision(12)+"</p><p>Primitiva: \\["+p.antiderivative_latex+"+C\\]</p>";let X=makeX(A,B),v=await sampleFormula(e,X);Plotly.newPlot("plot",[{x:X,y:v.y,mode:"lines",name:"f(x)"},{x:X,y:v.y,fill:"tozeroy",mode:"none",name:"Área"}],{title:"Visualización de f(x)"});renderFormula()}catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>"}}
-async function calculateVolume(){try{let A=Number(a.value),B=Number(b.value),f=expr.value,g;if({{ number }}===13){let s=document.getElementById("shape").value;g=s==="square"?"("+f+")^2":s==="semicircle"?"pi*("+f+")^2/8":"sqrt(3)*("+f+")^2/4"}else{let m=document.getElementById("method").value;g=m==="shell"?"2*pi*x*("+f+")":m==="washer"?"pi*(("+f+")^2-("+document.getElementById("inner").value+")^2)":"pi*("+f+")^2"}let q=await integrateFormula(g,A,B);result.innerHTML="<b>Planteamiento:</b><div class='formula'>\\[V=\\int_"+A+"^"+B+"("+g+")dx\\]</div><p>Volumen = "+Number(q.numeric).toPrecision(12)+" unidades cúbicas</p>";renderFormula()}catch(err){result.innerHTML="<p class='error'>"+err.message+"</p>"}}
-</script>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+<section class="content-card">
+  <span class="number">Módulo {{ number }} · Guía visual</span>
+  <h2>{{ title }}</h2>
+  <p>{{ theory }}</p>
+  <div class="formula">\[{{ formula }}\]</div>
+  <p>{{ explanation }}</p>
+</section>
+
+<section class="content-card">
+  <h3>Cómo se resuelve este tipo de ejercicio</h3>
+  {% if number == 7 %}
+  <ol class="solution-steps">
+    <li><b>Elegir u y dv:</b> aplica LIATE como orientación; prioriza logarítmicas, inversas trigonométricas, algebraicas, trigonométricas y exponenciales.</li>
+    <li><b>Derivar e integrar:</b> calcula du = u′ dx y v = ∫dv.</li>
+    <li><b>Aplicar la identidad:</b> sustituye en ∫u dv = uv − ∫v du.</li>
+    <li><b>Resolver la integral restante:</b> simplifica y vuelve a aplicar partes si hace falta.</li>
+    <li><b>Comprobar:</b> deriva el resultado y verifica que recuperas el integrando.</li>
+  </ol>
+  {% elif number == 8 %}
+  <ol class="solution-steps">
+    <li><b>Verificar la forma:</b> confirma que el integrando es P(x)/Q(x).</li>
+    <li><b>Comparar grados:</b> si grado(P) ≥ grado(Q), realiza división polinómica.</li>
+    <li><b>Factorizar el denominador:</b> identifica factores lineales, repetidos o cuadráticos irreducibles.</li>
+    <li><b>Plantear fracciones parciales:</b> asigna constantes a cada factor y determina sus valores.</li>
+    <li><b>Integrar cada término:</b> usa logaritmos, potencias o arctangentes y comprueba derivando.</li>
+  </ol>
+  {% elif number == 9 %}
+  <ol class="solution-steps">
+    <li><b>Identificar los radicales:</b> reconoce raíces y expresiones con potencias fraccionarias.</li>
+    <li><b>Reescribir:</b> convierte √[n](xᵐ) en x^(m/n) cuando convenga.</li>
+    <li><b>Elegir sustitución:</b> por ejemplo t = √x si aparecen potencias pares de √x.</li>
+    <li><b>Transformar toda la integral:</b> reemplaza x y dx, sin dejar variables mezcladas.</li>
+    <li><b>Integrar y regresar:</b> expresa el resultado en la variable original y verifica.</li>
+  </ol>
+  {% elif number == 10 %}
+  <ol class="solution-steps">
+    <li><b>Identificar potencias:</b> observa si los exponentes de seno o coseno son pares o impares.</li>
+    <li><b>Separar un factor:</b> si una potencia es impar, reserva un seno o coseno y convierte el resto con identidades.</li>
+    <li><b>Aplicar identidades:</b> usa sen²x + cos²x = 1 o 1 + tan²x = sec²x.</li>
+    <li><b>Sustituir:</b> toma u = cos x, u = sen x o u = tan x según el factor diferencial disponible.</li>
+    <li><b>Integrar y comprobar:</b> vuelve a x y deriva el resultado.</li>
+  </ol>
+  {% elif number == 11 %}
+  <ol class="solution-steps">
+    <li><b>Reconocer el radical:</b> a² − x², a² + x² o x² − a².</li>
+    <li><b>Elegir sustitución:</b> x = a sen θ, x = a tan θ o x = a sec θ, respectivamente.</li>
+    <li><b>Derivar:</b> calcula dx y sustituye el radical con una identidad trigonométrica.</li>
+    <li><b>Integrar en θ:</b> simplifica la expresión y resuelve la integral trigonométrica.</li>
+    <li><b>Regresar a x:</b> dibuja el triángulo de referencia y expresa el resultado en x.</li>
+  </ol>
+  {% elif number == 12 %}
+  <ol class="solution-steps">
+    <li><b>Identificar la forma:</b> busca una función racional de sen x y cos x.</li>
+    <li><b>Definir t:</b> usa t = tan(x/2).</li>
+    <li><b>Transformar:</b> reemplaza sen x, cos x y dx por sus expresiones racionales en t.</li>
+    <li><b>Integrar:</b> simplifica hasta obtener una función racional de t y resuélvela.</li>
+    <li><b>Deshacer el cambio:</b> sustituye t = tan(x/2) y comprueba derivando.</li>
+  </ol>
+  {% elif number == 13 %}
+  <ol class="solution-steps">
+    <li><b>Identificar la sección:</b> determina la forma de cada corte perpendicular al eje x.</li>
+    <li><b>Expresar sus dimensiones:</b> lado, diámetro o radio en función de x.</li>
+    <li><b>Calcular el área:</b> cuadrado s², semicírculo πd²/8 o triángulo equilátero √3s²/4.</li>
+    <li><b>Plantear el volumen:</b> integra A(x) entre los límites dados.</li>
+    <li><b>Evaluar:</b> calcula la integral y expresa el resultado en unidades cúbicas.</li>
+  </ol>
+  {% else %}
+  <ol class="solution-steps">
+    <li><b>Dibujar la región:</b> identifica la curva, el eje de giro y los límites.</li>
+    <li><b>Elegir el método:</b> discos, arandelas o capas cilíndricas según el corte.</li>
+    <li><b>Definir radios o altura:</b> expresa las dimensiones en función de x.</li>
+    <li><b>Construir el integrando:</b> π(R² − r²) para arandelas o 2π·radio·altura para capas.</li>
+    <li><b>Integrar:</b> evalúa entre los límites y reporta unidades cúbicas.</li>
+  </ol>
+  {% endif %}
+</section>
+
+<section class="content-card">
+  <h3>Calculadora y representación del método</h3>
+  <div class="controls">
+    <label>Función f(x)<input id="expr" value="{{ default_expr }}"></label>
+    <label>Límite inferior a<input id="a" type="number" step="any" value="0"></label>
+    <label>Límite superior b<input id="b" type="number" step="any" value="2"></label>
+    <button onclick="calculate()">Calcular</button>
+  </div>
+  {{ extra|safe }}
+  <div id="result" class="result-panel">Introduce los datos y pulsa calcular.</div>
+  <div id="plot" class="plot"></div>
+  <p class="plot-caption" id="plotCaption"></p>
+</section>
+
+<section class="content-card">
+  <h3>Ejemplos resueltos</h3>
+  {% for e in examples %}<div class="example">{{ e|safe }}</div>{% endfor %}
+</section>
+
+<script>
+const moduleNumber = {{ number }};
+const $ = id => document.getElementById(id);
+function plotLayout(title, threeD=false) {
+  const dark=document.documentElement.classList.contains("dark");
+  return {title, paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
+    font:{color:dark?"#e5e7eb":"#172033"}, margin:{l:55,r:25,t:55,b:55},
+    xaxis:{title:"x",zeroline:true,gridcolor:dark?"#334155":"#e5e7eb"},
+    yaxis:{title:"y",zeroline:true,gridcolor:dark?"#334155":"#e5e7eb"},
+    legend:{orientation:"h",y:-0.2}};
+}
+async function drawMethod(e,A,B) {
+  const X=makeX(A,B,220), sampled=await sampleFormula(e,X), y=sampled.y;
+  let traces=[{x:X,y,mode:"lines",name:"f(x)",line:{width:3}}], layout=plotLayout("Representación del integrando");
+  const cap=$("plotCaption");
+  if(moduleNumber===7){
+    traces.push({x:[A,B],y:[0,0],mode:"lines",name:"Eje x",line:{dash:"dot"}});
+    layout.title="Integración por partes · función y región de referencia";
+    cap.textContent="La identidad de partes proviene de la regla del producto: d(uv)=u·dv+v·du.";
+  } else if(moduleNumber===8){
+    layout.title="Función racional · polos y discontinuidades";
+    const poles=[];
+    for(let i=1;i<X.length;i++) if(!Number.isFinite(y[i]) || Math.abs(y[i])>1e4) poles.push(X[i]);
+    layout.shapes=(poles.slice(0,8)).map(x=>({type:"line",x0:x,x1:x,y0:0,y1:1,yref:"paper",line:{dash:"dash",color:"#ef4444"}}));
+    cap.textContent="Las líneas discontinuas aproximan puntos donde el denominador se anula. La integral debe tratarse por intervalos si hay una singularidad dentro del dominio.";
+  } else if(moduleNumber===9){
+    layout.title="Función con radicales · dominio real";
+    cap.textContent="Observa dónde la función está definida en los números reales. Los extremos del dominio pueden requerir atención al evaluar la integral.";
+  } else if(moduleNumber===10){
+    layout.title="Función trigonométrica · periodicidad";
+    layout.xaxis.title="x (radianes)";
+    cap.textContent="La forma periódica ayuda a reconocer identidades y simetrías antes de elegir una sustitución.";
+  } else if(moduleNumber===11){
+    layout.title="Radical y sustitución trigonométrica";
+    layout.xaxis.title="x";
+    cap.textContent="El triángulo de referencia permite regresar de θ a x: opuesto, adyacente e hipotenusa representan las relaciones trigonométricas.";
+  } else if(moduleNumber===12){
+    layout.title="Sustitución universal · integrando original";
+    cap.textContent="Con t = tan(x/2), seno, coseno y dx se convierten en expresiones racionales de t.";
+  } else if(moduleNumber===13){
+    const shape=$("shape")?.value||"square";
+    const area=y.map(v=>shape==="square"?v*v:shape==="semicircle"?Math.PI*v*v/8:Math.sqrt(3)*v*v/4);
+    traces.push({x:X,y:area,mode:"lines",name:"A(x) · área de sección",line:{width:3,dash:"dash"}});
+    layout.title="Sección transversal · área A(x)";
+    layout.yaxis.title="f(x) / A(x)";
+    cap.textContent="La curva A(x) representa el área de cada sección perpendicular al eje x. El volumen es el área acumulada a lo largo del intervalo.";
+  } else if(moduleNumber===14){
+    const mode=$("method")?.value||"disk";
+    if(mode==="shell"){
+      traces.push({x:X,y:X.map((v,i)=>2*Math.PI*v*y[i]),mode:"lines",name:"2π·x·f(x)",line:{dash:"dash",width:3}});
+    } else {
+      const inner=mode==="washer"?Number(await Promise.resolve($("inner").value||0)):0;
+      traces.push({x:X,y:y.map(v=>Math.PI*(v*v-inner*inner)),mode:"lines",name:"π(R²-r²)",line:{dash:"dash",width:3}});
+    }
+    layout.title="Sólido de revolución · radio y función";
+    layout.yaxis.title="f(x) / integrando de volumen";
+    cap.textContent=mode==="shell"?"Capas cilíndricas: radio x, altura f(x) y circunferencia 2πx.":"Discos/arandelas: el radio exterior es f(x); la arandela resta el radio interior.";
+  }
+  Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
+}
+async function calculate(){
+  const box=$("result");
+  try{
+    const e=$("expr").value,A=Number($("a").value),B=Number($("b").value);
+    if(!(B>A)) throw new Error("El límite superior debe ser mayor que el inferior.");
+    box.textContent="Calculando…";
+    const parsed=await processFormula(e), q=await integrateFormula(e,A,B);
+    let html="<b>1. Integrando interpretado:</b><div class='formula'>\\["+parsed.latex+"\\]</div>";
+    html+="<b>2. Primitiva obtenida:</b><div class='formula'>\\["+q.latex+"\\]</div>";
+    html+="<b>3. Evaluación en los límites:</b><div class='formula'>\\["+q.latex+"\\]</div>";
+    html+="<p><b>Valor numérico:</b> "+Number(q.numeric).toPrecision(10)+"</p>";
+    html+="<p class='notice'>Comprueba que la función sea continua en el intervalo y que los límites estén dentro de su dominio.</p>";
+    box.innerHTML=html;
+    await drawMethod(e,A,B);renderFormula();
+  }catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>";}
+}
+async function calculateVolume(){
+  const box=$("result");
+  try{
+    const A=Number($("a").value),B=Number($("b").value),f=$("expr").value;
+    if(!(B>A)) throw new Error("El límite superior debe ser mayor que el inferior.");
+    let g,description;
+    if(moduleNumber===13){
+      const s=$("shape").value;
+      g=s==="square"?"("+f+")^2":s==="semicircle"?"pi*("+f+")^2/8":"sqrt(3)*("+f+")^2/4";
+      description=s==="square"?"A(x)=s²":s==="semicircle"?"A(x)=πd²/8":"A(x)=√3s²/4";
+    }else{
+      const m=$("method").value;
+      if(m==="shell"){g="2*pi*x*("+f+")";description="A(x)=2π·radio·altura";}
+      else if(m==="washer"){const inner=$("inner").value||"0";g="pi*(("+f+")^2-("+inner+")^2)";description="A(x)=π(R²-r²)";}
+      else{g="pi*("+f+")^2";description="A(x)=πr²";}
+    }
+    const q=await integrateFormula(g,A,B);
+    box.innerHTML="<b>1. Área o elemento de volumen:</b><div class='formula'>"+description+"</div><b>2. Integral planteada:</b><div class='formula'>\\[V=\\int_{"+A+"}^{"+B+"}("+g+")\\,dx\\]</div><b>3. Resultado:</b><p>V = <b>"+Number(q.numeric).toPrecision(10)+"</b> unidades cúbicas</p>";
+    await drawMethod(f,A,B);renderFormula();
+  }catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>";}
+}
+window.addEventListener("load",()=>{if(moduleNumber===13||moduleNumber===14){const btn=document.querySelector("button[onclick='calculateVolume()']");if(btn)btn.addEventListener("click",()=>{});}calculate();});
+</script>
+{% endblock %}
