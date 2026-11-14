@@ -7,3 +7,10 @@
 .button-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.button-row button{width:auto}.big-input{font-size:1.05rem;padding:14px}.formula{overflow-x:auto;padding:14px;background:#f8fafc;border-radius:10px;margin:12px 0}.example{background:#f8fafc;border-left:4px solid var(--primary);padding:12px 16px;margin:12px 0}.plot{width:100%;min-height:420px}.result-box,.result-panel{padding:14px;background:#eef4ff;border:1px solid #cfe0ff;border-radius:10px;margin:14px 0}.success,.notice{color:var(--success);font-weight:750}.error{color:var(--danger);font-weight:650}.placeholder{min-height:55vh;display:grid;place-items:center;text-align:center}code{background:#eef2f7;padding:2px 5px;border-radius:5px}
 html.dark{--bg:#0b1020;--card:#121a2b;--text:#e5e7eb;--muted:#aab4c3;--primary:#60a5fa;--border:#2a3850}html.dark body{background:var(--bg);color:var(--text)}html.dark .content-card,html.dark .module-card{background:var(--card);border-color:var(--border);box-shadow:none}html.dark .formula,html.dark .example,html.dark .result-box,html.dark .result-panel{background:#0f172a;border-color:#26344d}html.dark input,html.dark select{background:#0f172a;color:var(--text);border-color:#46556d}html.dark code{background:#1f2a3d;color:#dbeafe}
 @media(max-width:600px){.header-inner{align-items:flex-start}.content-card{padding:16px}.plot{min-height:340px}.button-row button{width:100%}}
+/* Guías de resolución y visualizaciones matemáticas */
+.solution-steps{padding-left:1.35rem;margin:14px 0;display:grid;gap:12px}
+.solution-steps li{padding:10px 14px;background:var(--step-bg,#f1f5f9);border-left:3px solid var(--primary);border-radius:8px}
+.plot-caption{color:var(--muted);font-size:.94rem;margin:8px 2px}
+.plot{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card);padding:6px}
+html.dark .solution-steps li{--step-bg:#172338}
+@media(max-width:600px){.solution-steps{padding-left:1.1rem}.solution-steps li{padding:9px 10px}}
