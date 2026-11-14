@@ -12,6 +12,6 @@ def index():
         theory="La sustitución de ángulo mitad transforma expresiones racionales de seno y coseno en fracciones racionales de t.",
         explanation="Observa la representación y sigue los pasos del método antes de resolver el ejercicio.",
         default_expr="1/(1+cos(x))",
-        examples=[r"""\(\int\frac{dx}{1+\cos x}\). **1.** Define \(t=\tan(x/2)\). **2.** Usa \(1+\cos x=\frac{2}{1+t^2}\) y \(dx=\frac{2dt}{1+t^2}\). **3.** La integral se reduce a \(\int dt\). **4.** Resultado: \(\tan(x/2)+C\).""",r"""Para \(\int\frac{dx}{1+\sin x}\), **1.** sustituye seno y diferencial por expresiones en t. **2.** Simplifica la fracción racional resultante. **3.** Integra en t y finalmente reemplaza \(t=\tan(x/2)\)."""],
+        examples=[r"""\(\int\frac{dx}{1+\cos x}\). <b>1.</b> Define \(t=\tan(x/2)\). <b>2.</b> Usa \(1+\cos x=\frac{2}{1+t^2}\) y \(dx=\frac{2dt}{1+t^2}\). <b>3.</b> La integral se reduce a \(\int dt\). <b>4.</b> Resultado: \(\tan(x/2)+C\).""",r"""Para \(\int\frac{dx}{1+\sin x}\), <b>1.</b> sustituye seno y diferencial por expresiones en t. <b>2.</b> Simplifica la fracción racional resultante. <b>3.</b> Integra en t y finalmente reemplaza \(t=\tan(x/2)\)."""],
         extra=""
     )
