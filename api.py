@@ -86,7 +86,7 @@ def sample():
         ys=np.asarray(fn(xs),dtype=float)
         ys=[float(v) if np.isfinite(v) else None for v in ys]
         anti=sp.integrate(expr,x)
-        return jsonify({"ok":True,"normalized":str(expr),"latex":sp.latex(expr),"y":ys.tolist(),
+        return jsonify({"ok":True,"normalized":str(expr),"latex":sp.latex(expr),"y":ys,
                         "antiderivative":str(anti),"antiderivative_latex":sp.latex(anti)})
     except Exception as exc:
         return jsonify({"ok":False,"error":f"No se pudo evaluar la función: {exc}"}),400
