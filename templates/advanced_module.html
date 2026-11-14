@@ -98,150 +98,228 @@
 </section>
 
 <script>
-const moduleNumber = {{ number }};
-const $ = id => document.getElementById(id);
-function plotLayout(title, threeD=false) {
-  const dark=document.documentElement.classList.contains("dark");
-  return {title, paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
-    font:{color:dark?"#e5e7eb":"#172033"}, margin:{l:55,r:25,t:55,b:55},
-    xaxis:{title:"x",zeroline:true,gridcolor:dark?"#334155":"#e5e7eb"},
-    yaxis:{title:"y",zeroline:true,gridcolor:dark?"#334155":"#e5e7eb"},
-    legend:{orientation:"h",y:-0.2}};
+const moduleNumber={{ number }};
+const $=id=>document.getElementById(id);
+const darkMode=()=>document.documentElement.classList.contains("dark");
+const axisColor=()=>darkMode()?"#334155":"#e5e7eb";
+const fontColor=()=>darkMode()?"#e5e7eb":"#172033";
+const baseLayout=(title)=>({
+  title, paper_bgcolor:"rgba(0,0,0,0)", plot_bgcolor:"rgba(0,0,0,0)",
+  font:{color:fontColor()}, margin:{l:58,r:35,t:58,b:58},
+  xaxis:{title:"x",zeroline:true,gridcolor:axisColor()},
+  yaxis:{title:"f(x)",zeroline:true,gridcolor:axisColor()},
+  legend:{orientation:"h",y:-0.22}
+});
+function finiteY(values){
+  return (values||[]).map(v=>{
+    if(v===null||v===undefined) return null;
+    const n=Number(v); return Number.isFinite(n)?n:null;
+  });
 }
-async function drawMethod(e,A,B) {
-  const X=makeX(A,B,220), sampled=await sampleFormula(e,X), y=sampled.y.map(v=>v===null?null:Number.isFinite(Number(v))?Number(v):null);
-  let traces=[{x:X,y,mode:"lines",name:"f(x)",line:{width:3}}], layout=plotLayout("Representación del integrando");
-  const cap=$("plotCaption");
-  if(moduleNumber===7){
-    traces.push({x:[A,B],y:[0,0],mode:"lines",name:"Eje x",line:{dash:"dot"}});
-    layout.title="Integración por partes · función y región de referencia";
-    cap.textContent="La identidad de partes proviene de la regla del producto: d(uv)=u·dv+v·du.";
-  } else if(moduleNumber===8){
-    layout.title="Función racional · polos y discontinuidades";
-    const poles=[];
-    for(let i=1;i<X.length;i++) if(!Number.isFinite(y[i]) || Math.abs(y[i])>1e4) poles.push(X[i]);
-    layout.shapes=(poles.slice(0,8)).map(x=>({type:"line",x0:x,x1:x,y0:0,y1:1,yref:"paper",line:{dash:"dash",color:"#ef4444"}}));
-    cap.textContent="Las líneas discontinuas aproximan puntos donde el denominador se anula. La integral debe tratarse por intervalos si hay una singularidad dentro del dominio.";
-  } else if(moduleNumber===9){
-    layout.title="Función con radicales · dominio real";
-    cap.textContent="Observa dónde la función está definida en los números reales. Los extremos del dominio pueden requerir atención al evaluar la integral.";
-  } else if(moduleNumber===10){
-    layout.title="Función trigonométrica · periodicidad";
-    layout.xaxis.title="x (radianes)";
-    cap.textContent="La forma periódica ayuda a reconocer identidades y simetrías antes de elegir una sustitución.";
-  } else if(moduleNumber===11){
-    layout.title="Radical y sustitución trigonométrica";
-    layout.xaxis.title="x";
-    cap.textContent="El triángulo de referencia permite regresar de θ a x: opuesto, adyacente e hipotenusa representan las relaciones trigonométricas.";
-  } else if(moduleNumber===12){
-    layout.title="Sustitución universal · integrando original";
-    cap.textContent="Con t = tan(x/2), seno, coseno y dx se convierten en expresiones racionales de t.";
-  } else if(moduleNumber===13){
-    const shape=$("shape")?.value||"square";
-    const area=y.map(v=>v===null?null:shape==="square"?v*v:shape==="semicircle"?Math.PI*v*v/8:Math.sqrt(3)*v*v/4);
-    traces=[{x:X,y,mode:"lines",name:"Dimensión f(x)",line:{width:3}},{x:X,y:area,mode:"lines",name:"Área A(x)",line:{width:3,dash:"dash"},yaxis:"y2"}];
-    layout.title="2D · dimensión y área de las secciones";
-    layout.yaxis={title:"Dimensión de la sección",zeroline:true};
-    layout.yaxis2={title:"Área A(x)",overlaying:"y",side:"right",showgrid:false};
-    cap.textContent="La gráfica compara la dimensión de cada corte con su área A(x). La vista 3D muestra cómo se extruye esa sección a lo largo del eje x.";
-  } else if(moduleNumber===14){
-    const mode=$("method")?.value||"disk", inner=Math.max(0,Number($("inner")?.value||0));
-    traces=[{x:X,y,mode:"lines",name:"Radio exterior R(x)",line:{width:3}}];
-    if(mode==="washer") traces.push({x:X,y:X.map(()=>inner),mode:"lines",name:"Radio interior r(x)",line:{dash:"dash",width:2}});
-    if(mode!=="shell") traces.push({x:X,y:y.map(v=>v===null?null:Math.PI*(v*v-(mode==="washer"?inner*inner:0))),mode:"lines",name:"Área del corte π(R²−r²)",line:{dash:"dot",width:2},yaxis:"y2"});
-    layout.title=mode==="shell"?"2D · capas cilíndricas alrededor del eje y":mode==="washer"?"2D · arandelas perpendiculares al eje x":"2D · discos perpendiculares al eje x";
-    layout.yaxis={title:"Radio / altura",zeroline:true};
-    if(mode!=="shell") layout.yaxis2={title:"Área del corte",overlaying:"y",side:"right",showgrid:false};
-    cap.textContent=mode==="shell"?"La curva muestra la altura f(x) y el radio x de cada capa cilíndrica. La vista 3D representa una capa representativa que gira alrededor del eje y.":"La gráfica 2D muestra la región generadora y sus radios; la vista 3D representa la superficie de revolución correspondiente.";
-  }
-  Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
+function showGraphError(id,error){
+  const el=$(id); if(el) el.innerHTML="<div class='notice'>No se pudo dibujar esta gráfica: "+String(error.message||error)+"</div>";
 }
-async function drawConceptDiagram(){
-  const el=$("methodDiagram"); if(!el)return;
-  const dark=document.documentElement.classList.contains("dark"), color=dark?"#e5e7eb":"#172033";
-  let traces=[],layout={title:"Esquema del método",paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:35,r:25,t:55,b:35},showlegend:false};
-  if(moduleNumber===7){
-    traces=[];
-    layout.title="Integración por partes · regla del producto";
-    layout.xaxis={visible:false,range:[0,10]};layout.yaxis={visible:false,range:[0,5]};
-    layout.shapes=[{type:"rect",x0:1,y0:1,x1:4,y1:3,line:{color:"#2563eb",width:2},fillcolor:"rgba(37,99,235,.18)"},{type:"rect",x0:5,y0:1,x1:8,y1:3,line:{color:"#0d9488",width:2},fillcolor:"rgba(13,148,136,.18)"}];
-    layout.annotations=[{x:2.5,y:2,text:"u · dv",showarrow:false,font:{size:18}},{x:6.5,y:2,text:"v · du",showarrow:false,font:{size:18}},{x:4.5,y:4,text:"d(uv) = u·dv + v·du",showarrow:false,font:{size:16}}];
-  }else if(moduleNumber===13 || moduleNumber===14){
-    const A=Number($("a").value),B=Number($("b").value),xs=makeX(A,B,48),sampled=await sampleFormula($("expr").value,xs);
-    const vals=sampled.y.map(v=>v===null?0:Number.isFinite(Number(v))?Math.max(0,Math.abs(Number(v))):0);
-    const theta=Array.from({length:40},(_,j)=>2*Math.PI*j/39);
-    if(moduleNumber===13){
-      const shape=$("shape").value,xx=[],yy=[],zz=[];
-      for(let i=0;i<xs.length;i++){let ring=[];const v=vals[i];if(shape==="square")ring=[[-v/2,-v/2],[v/2,-v/2],[v/2,v/2],[-v/2,v/2],[-v/2,-v/2]];else if(shape==="triangle")ring=[[-v/2,0],[v/2,0],[0,Math.sqrt(3)*v/2],[-v/2,0]];else{for(let j=0;j<40;j++){const t=Math.PI*j/39;ring.push([v/2*Math.cos(t),v/2*Math.sin(t)]);}}for(let j=0;j<ring.length;j++){if(!xx[j]){xx[j]=[];yy[j]=[];zz[j]=[];}xx[j].push(xs[i]);yy[j].push(ring[j][0]);zz[j].push(ring[j][1]);}}
-      traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.9,name:"Secciones transversales"}];
-      layout={title:"3D · sólido formado por secciones",paper_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje x"},yaxis:{title:"Ancho"},zaxis:{title:"Altura"},aspectmode:"data"}};
-    }else{
-      const method=$("method").value,inner=Math.max(0,Number($("inner").value||0));
-      if(method==="shell"){const k=Math.floor(xs.length*.6),r=Math.abs(xs[k]),h=vals[k],xx=[],yy=[],zz=[];for(let i=0;i<24;i++){const v=h*i/23;xx.push(theta.map(t=>r*Math.cos(t)));yy.push(theta.map(()=>v));zz.push(theta.map(t=>r*Math.sin(t)));}traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Teal",showscale:false,opacity:.9,name:"Capa cilíndrica"}];layout={title:"3D · capa cilíndrica alrededor del eje y",paper_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"x"},yaxis:{title:"altura"},zaxis:{title:"z"},aspectmode:"data"}};
-      }else{const xx=[],yy=[],zz=[];for(let i=0;i<xs.length;i++){xx.push(theta.map(()=>xs[i]));yy.push(theta.map(t=>vals[i]*Math.cos(t)));zz.push(theta.map(t=>vals[i]*Math.sin(t)));}traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.9,name:"Superficie exterior"}];if(method==="washer"&&inner>0){const ix=[],iy=[],iz=[];for(let i=0;i<xs.length;i++){ix.push(theta.map(()=>xs[i]));iy.push(theta.map(t=>inner*Math.cos(t)));iz.push(theta.map(t=>inner*Math.sin(t)));}traces.push({type:"surface",x:ix,y:iy,z:iz,colorscale:"Greys",showscale:false,opacity:.7,name:"Superficie interior"});}layout={title:method==="washer"?"3D · sólido con arandelas":"3D · sólido con discos",paper_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje de giro x"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}};}
+async function getSamples(expression,A,B,count=220){
+  const xs=makeX(A,B,count);
+  const data=await sampleFormula(expression,xs);
+  if(!data||!Array.isArray(data.y)) throw new Error("El servidor no devolvió una lista de valores.");
+  return {x:xs,y:finiteY(data.y)};
+}
+async function drawMainGraph(expression,A,B){
+  try{
+    const s=await getSamples(expression,A,B);
+    let traces=[{x:s.x,y:s.y,type:"scatter",mode:"lines",name:"f(x)",line:{width:3}}];
+    let layout=baseLayout("Función integranda");
+    const caption=$("plotCaption");
+    if(moduleNumber===7){
+      const parsed=await processFormula(expression);
+      const anti=await getSamples(parsed.antiderivative,A,B);
+      traces.push({x:anti.x,y:anti.y,type:"scatter",mode:"lines",name:"Primitiva F(x)",yaxis:"y2",line:{width:2,dash:"dash"}});
+      layout.title="Integración por partes · integrando y primitiva";
+      layout.yaxis2={title:"F(x)",overlaying:"y",side:"right",showgrid:false};
+      caption.textContent="Compara el integrando f(x) con una primitiva F(x). La derivada de F(x) debe recuperar f(x).";
+    }else if(moduleNumber===8){
+      layout.title="Integración racional · curva y discontinuidades";
+      const poles=[];
+      for(let i=1;i<s.x.length;i++){
+        const p=s.y[i-1],q=s.y[i];
+        if(p!==null&&q!==null&&Math.abs(p-q)>30&&Math.max(Math.abs(p),Math.abs(q))>20) poles.push((s.x[i-1]+s.x[i])/2);
+      }
+      layout.shapes=poles.slice(0,8).map(v=>({type:"line",x0:v,x1:v,y0:0,y1:1,yref:"paper",line:{dash:"dash",color:"#ef4444"}}));
+      caption.textContent="Las discontinuidades se muestran con líneas verticales aproximadas. No se debe integrar atravesando un polo sin estudiar la integral impropia.";
+    }else if(moduleNumber===9){
+      layout.title="Integración irracional · función y dominio real";
+      caption.textContent="Los espacios sin curva indican puntos donde la expresión no tiene un valor real definido.";
+    }else if(moduleNumber===10){
+      layout.title="Integración trigonométrica · función periódica";
+      layout.xaxis.title="x (radianes)";
+      caption.textContent="La curva permite reconocer periodicidad, simetría y comportamiento de las potencias trigonométricas.";
+    }else if(moduleNumber===11){
+      layout.title="Sustitución trigonométrica · integrando original";
+      caption.textContent="La gráfica muestra el radical original. El triángulo auxiliar relaciona x con el ángulo θ de la sustitución.";
+    }else if(moduleNumber===12){
+      layout.title="Sustitución universal · integrando original";
+      layout.xaxis.title="x (radianes)";
+      caption.textContent="La sustitución t = tan(x/2) transforma las expresiones trigonométricas en funciones racionales de t.";
+    }else if(moduleNumber===13){
+      const shape=$("shape").value;
+      const area=s.y.map(v=>v===null?null:shape==="square"?v*v:shape==="semicircle"?Math.PI*v*v/8:Math.sqrt(3)*v*v/4);
+      traces=[{x:s.x,y:s.y,type:"scatter",mode:"lines",name:"Dimensión de la sección",line:{width:3}},
+              {x:s.x,y:area,type:"scatter",mode:"lines",name:"Área A(x)",yaxis:"y2",line:{width:3,dash:"dash"}}];
+      layout.title="Secciones transversales · dimensión y área";
+      layout.yaxis.title="Dimensión";
+      layout.yaxis2={title:"Área A(x)",overlaying:"y",side:"right",showgrid:false};
+      caption.textContent="La línea continua representa el lado o diámetro de cada sección; la discontinua representa el área transversal A(x).";
+    }else if(moduleNumber===14){
+      const mode=$("method").value;
+      traces=[{x:s.x,y:s.y,type:"scatter",mode:"lines",name:mode==="shell"?"Altura f(x)":"Radio exterior R(x)",line:{width:3}}];
+      if(mode==="washer"){
+        const inner=Number($("inner").value||0);
+        traces.push({x:s.x,y:s.x.map(()=>inner),type:"scatter",mode:"lines",name:"Radio interior r(x)",line:{dash:"dash"}});
+      }
+      if(mode!=="shell"){
+        const inner=mode==="washer"?Number($("inner").value||0):0;
+        traces.push({x:s.x,y:s.y.map(v=>v===null?null:Math.PI*(v*v-inner*inner)),type:"scatter",mode:"lines",name:"Área del corte",yaxis:"y2",line:{dash:"dot"}});
+        layout.yaxis2={title:"Área del disco/arandela",overlaying:"y",side:"right",showgrid:false};
+      }
+      layout.title=mode==="shell"?"Capas cilíndricas · radio x y altura f(x)":mode==="washer"?"Arandelas · radios exterior e interior":"Discos · radio R(x)";
+      layout.yaxis.title=mode==="shell"?"Altura f(x)":"Radio";
+      caption.textContent=mode==="shell"?"El radio de cada capa es x y su altura es f(x). La gráfica 3D muestra una capa representativa.":"La gráfica 2D muestra el radio exterior y, cuando corresponde, el radio interior; el área del corte se calcula aparte.";
     }
-    Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});return;
-  }else if(moduleNumber===8){
-    traces=[];
-    layout.title="Fracciones parciales · descomposición de una fracción";
-    layout.xaxis={visible:false,range:[0,10]};layout.yaxis={visible:false,range:[0,5]};
-    layout.shapes=[{type:"rect",x0:.5,y0:1.5,x1:3.2,y1:3.2,line:{color:"#2563eb",width:2},fillcolor:"rgba(37,99,235,.15)"},{type:"rect",x0:6.5,y0:2.6,x1:9.2,y1:3.8,line:{color:"#0d9488",width:2},fillcolor:"rgba(13,148,136,.15)"},{type:"rect",x0:6.5,y0:.8,x1:9.2,y1:2,line:{color:"#d97706",width:2},fillcolor:"rgba(217,119,6,.15)"}];
-    layout.annotations=[{x:1.85,y:2.35,text:"P(x) / Q(x)",showarrow:false,font:{size:17}},{x:5,y:2.5,text:"=",showarrow:false,font:{size:24}},{x:7.85,y:3.2,text:"A / (x−r₁)",showarrow:false},{x:7.85,y:1.4,text:"B / (x−r₂)",showarrow:false},{x:5,y:.3,text:"Cada factor del denominador genera términos simples",showarrow:false}];
-  }else if(moduleNumber===9){
-    traces=[{x:[0,1,2,3,4],y:[0,1,Math.sqrt(2),Math.sqrt(3),2],mode:"lines+markers",name:"√x"},{x:[0,1,2,3,4],y:[0,1,Math.pow(2,.5),Math.pow(3,.5),2],mode:"markers",name:"x^(1/2)"}];
-    layout.title="Radical y potencia fraccionaria · √x = x^(1/2)";layout.xaxis={title:"x"};layout.yaxis={title:"valor"};
-  }else if(moduleNumber===10){
-    const X=makeX(0,2*Math.PI,160);
-    traces=[{x:X,y:X.map(Math.sin),mode:"lines",name:"sen x"},{x:X,y:X.map(Math.cos),mode:"lines",name:"cos x"}];
-    layout.title="Funciones seno y coseno · periodo 2π";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"valor"};
-  }else if(moduleNumber===11){
-    traces=[{x:[0,Math.sqrt(6.75),0,0],y:[0,0,1.5,0],mode:"lines+markers",fill:"toself",name:"Triángulo de referencia",line:{width:3}}];
-    layout.title="Triángulo rectángulo · x = 3 sen θ";layout.xaxis={title:"cateto adyacente"};layout.yaxis={title:"cateto opuesto"};
-    layout.annotations=[{x:0,y:.75,text:"x",showarrow:false,xshift:-14},{x:1.3,y:0,text:"√(9−x²)",showarrow:false,yshift:-16},{x:.8,y:.85,text:"3",showarrow:false}];
-  }else if(moduleNumber===12){
-    const T=makeX(-5,5,180);
-    traces=[{x:T,y:T.map(t=>2*t/(1+t*t)),mode:"lines",name:"sen x = 2t/(1+t²)"},{x:T,y:T.map(t=>(1-t*t)/(1+t*t)),mode:"lines",name:"cos x = (1−t²)/(1+t²)"},{x:T,y:T.map(t=>2/(1+t*t)),mode:"lines",name:"dx/dt = 2/(1+t²)",line:{dash:"dash"}}];
-    layout.title="Sustitución universal · expresiones racionales en t";layout.xaxis={title:"t = tan(x/2)"};layout.yaxis={title:"Valor"};
-  }else return;
-  Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});
+    await Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
+  }catch(error){showGraphError("plot",error);}
+}
+function diagramLayout(title){
+  return {title,paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color:fontColor()},
+    margin:{l:45,r:25,t:55,b:45},xaxis:{title:"",gridcolor:axisColor()},yaxis:{title:"",gridcolor:axisColor()},showlegend:true};
+}
+async function drawMethodDiagram(){
+  const el=$("methodDiagram"); if(!el)return;
+  try{
+    let traces=[],layout=diagramLayout("Esquema del procedimiento");
+    if(moduleNumber===7){
+      traces=[{x:[0,1,2,3],y:[0,1,2,3],mode:"lines+markers",name:"u",line:{width:3}},
+              {x:[0,1,2,3],y:[3,2,1,0],mode:"lines+markers",name:"dv → v",line:{width:3,dash:"dash"}}];
+      layout.title="Partes · elegir u y dv";
+      layout.annotations=[{x:1.5,y:2.7,text:"∫u dv = uv − ∫v du",showarrow:false}];
+      layout.xaxis={visible:false};layout.yaxis={visible:false};
+    }else if(moduleNumber===8){
+      traces=[{x:[0,1,2,3],y:[1,1,1,1],mode:"lines",name:"P(x)/Q(x)"},
+              {x:[0,1,2,3],y:[.5,.5,.5,.5],mode:"lines",name:"Término A/(x−r₁)",line:{dash:"dash"}},
+              {x:[0,1,2,3],y:[.5,.5,.5,.5],mode:"lines",name:"Término B/(x−r₂)",line:{dash:"dot"}}];
+      layout.title="Fracciones parciales · separar en términos simples";
+      layout.annotations=[{x:1.5,y:1.25,text:"Factorizar Q(x) → hallar constantes → integrar",showarrow:false}];
+      layout.yaxis={visible:false};layout.xaxis={visible:false};
+    }else if(moduleNumber===9){
+      const X=[0,1,2,3,4];
+      traces=[{x:X,y:X.map(Math.sqrt),mode:"lines+markers",name:"√x"},
+              {x:X,y:X.map(v=>Math.pow(v,.5)),mode:"markers",name:"x^(1/2)"}];
+      layout.title="Radical = potencia fraccionaria";
+      layout.xaxis={title:"x"};layout.yaxis={title:"valor"};
+    }else if(moduleNumber===10){
+      const X=makeX(0,2*Math.PI,180);
+      traces=[{x:X,y:X.map(Math.sin),mode:"lines",name:"sen x"},
+              {x:X,y:X.map(Math.cos),mode:"lines",name:"cos x"}];
+      layout.title="Identidades trigonométricas · seno y coseno";
+      layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"valor"};
+    }else if(moduleNumber===11){
+      traces=[{x:[0,Math.sqrt(6.75),0,0],y:[0,0,1.5,0],mode:"lines+markers",fill:"toself",name:"Triángulo: x = 3 sen θ",line:{width:3}}];
+      layout.title="Triángulo de referencia para √(9−x²)";
+      layout.xaxis={title:"cateto adyacente"};layout.yaxis={title:"cateto opuesto"};
+      layout.annotations=[{x:0,y:.75,text:"x",showarrow:false,xshift:-15},{x:1.3,y:0,text:"√(9−x²)",showarrow:false,yshift:-15},{x:.8,y:.85,text:"3",showarrow:false}];
+    }else if(moduleNumber===12){
+      const T=makeX(-5,5,180);
+      traces=[{x:T,y:T.map(t=>2*t/(1+t*t)),mode:"lines",name:"sen x = 2t/(1+t²)"},
+              {x:T,y:T.map(t=>(1-t*t)/(1+t*t)),mode:"lines",name:"cos x = (1−t²)/(1+t²)"},
+              {x:T,y:T.map(t=>2/(1+t*t)),mode:"lines",name:"dx/dt = 2/(1+t²)",line:{dash:"dash"}}];
+      layout.title="Sustitución universal · expresiones racionales en t";
+      layout.xaxis={title:"t = tan(x/2)"};layout.yaxis={title:"valor"};
+    }else if(moduleNumber===13){
+      const A=Number($("a").value),B=Number($("b").value),s=await getSamples($("expr").value,A,B,36);
+      const shape=$("shape").value,theta=Array.from({length:32},(_,i)=>Math.PI*i/31);
+      const xx=[],yy=[],zz=[];
+      for(let i=0;i<s.x.length;i++){
+        const raw=s.y[i],v=raw===null?0:Math.abs(raw);let ring=[];
+        if(shape==="square")ring=[[-v/2,-v/2],[v/2,-v/2],[v/2,v/2],[-v/2,v/2],[-v/2,-v/2]];
+        else if(shape==="triangle")ring=[[-v/2,0],[v/2,0],[0,Math.sqrt(3)*v/2],[-v/2,0]];
+        else ring=theta.map(t=>[v/2*Math.cos(t),v/2*Math.sin(t)]);
+        for(let j=0;j<ring.length;j++){if(!xx[j]){xx[j]=[];yy[j]=[];zz[j]=[];}xx[j].push(s.x[i]);yy[j].push(ring[j][0]);zz[j].push(ring[j][1]);}
+      }
+      traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.9,name:"Superficie del sólido"}];
+      layout={title:"3D · sólido formado por secciones transversales",paper_bgcolor:"rgba(0,0,0,0)",font:{color:fontColor()},margin:{l:0,r:0,t:55,b:0},
+        scene:{xaxis:{title:"Eje x"},yaxis:{title:"Ancho"},zaxis:{title:"Altura"},aspectmode:"data"}};
+    }else if(moduleNumber===14){
+      const A=Number($("a").value),B=Number($("b").value),s=await getSamples($("expr").value,A,B,44);
+      const mode=$("method").value,theta=Array.from({length:48},(_,i)=>2*Math.PI*i/47);
+      const radii=s.y.map(v=>v===null?0:Math.max(0,Math.abs(v)));
+      if(mode==="shell"){
+        const k=Math.floor(radii.length*.55),r=Math.max(.05,Math.abs(s.x[k])),h=Math.max(.05,radii[k]);
+        const xx=[],yy=[],zz=[];
+        for(let j=0;j<26;j++){const height=h*j/25;xx.push(theta.map(t=>r*Math.cos(t)));yy.push(theta.map(()=>height));zz.push(theta.map(t=>r*Math.sin(t)));}
+        traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Teal",showscale:false,opacity:.9,name:"Capa cilíndrica"}];
+        layout={title:"3D · elemento de capa cilíndrica alrededor del eje y",paper_bgcolor:"rgba(0,0,0,0)",font:{color:fontColor()},margin:{l:0,r:0,t:55,b:0},
+          scene:{xaxis:{title:"x"},yaxis:{title:"altura"},zaxis:{title:"z"},aspectmode:"data"}};
+      }else{
+        const inner=mode==="washer"?Math.max(0,Number($("inner").value||0)):0;
+        const xx=[],yy=[],zz=[],ix=[],iy=[],iz=[];
+        for(let i=0;i<s.x.length;i++){
+          xx.push(theta.map(()=>s.x[i]));yy.push(theta.map(t=>radii[i]*Math.cos(t)));zz.push(theta.map(t=>radii[i]*Math.sin(t)));
+          ix.push(theta.map(()=>s.x[i]));iy.push(theta.map(t=>inner*Math.cos(t)));iz.push(theta.map(t=>inner*Math.sin(t)));
+        }
+        traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.88,name:"Superficie exterior"}];
+        if(mode==="washer"&&inner>0)traces.push({type:"surface",x:ix,y:iy,z:iz,colorscale:"Greys",showscale:false,opacity:.65,name:"Superficie interior"});
+        layout={title:mode==="washer"?"3D · sólido hueco generado por arandelas":"3D · sólido generado por discos",paper_bgcolor:"rgba(0,0,0,0)",font:{color:fontColor()},margin:{l:0,r:0,t:55,b:0},
+          scene:{xaxis:{title:"Eje de giro x"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}};
+      }
+    }else return;
+    await Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});
+  }catch(error){showGraphError("methodDiagram",error);}
 }
 async function calculate(){
   const box=$("result");
   try{
-    const e=$("expr").value,A=Number($("a").value),B=Number($("b").value);
-    if(!(B>A)) throw new Error("El límite superior debe ser mayor que el inferior.");
+    const expression=$("expr").value,A=Number($("a").value),B=Number($("b").value);
+    if(!(B>A))throw new Error("El límite superior debe ser mayor que el inferior.");
     box.textContent="Calculando…";
-    const parsed=await processFormula(e), q=await integrateFormula(e,A,B);
-    let html="<b>1. Integrando interpretado:</b><div class='formula'>\\["+parsed.latex+"\\]</div>";
-    html+="<b>2. Primitiva obtenida:</b><div class='formula'>\\["+parsed.antiderivative_latex+"+C\\]</div>";
-    html+="<b>3. Evaluación F(b) − F(a):</b><div class='formula'>\\["+q.latex+"\\]</div>";
-    html+="<p><b>Valor numérico:</b> "+Number(q.numeric).toPrecision(10)+"</p>";
-    html+="<p class='notice'>Comprueba que la función sea continua en el intervalo y que los límites estén dentro de su dominio.</p>";
-    box.innerHTML=html;
-    await drawMethod(e,A,B);drawConceptDiagram();renderFormula();
-  }catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>";}
+    const parsed=await processFormula(expression),result=await integrateFormula(expression,A,B);
+    const numeric=Number(result.numeric);
+    if(!Number.isFinite(numeric))throw new Error("La integral no produjo un valor numérico finito en este intervalo.");
+    box.innerHTML="<b>1. Integrando interpretado:</b><div class='formula'>\\["+parsed.latex+"\\]</div>"+
+      "<b>2. Primitiva:</b><div class='formula'>\\["+parsed.antiderivative_latex+"+C\\]</div>"+
+      "<b>3. Evaluación definida:</b><div class='formula'>\\["+result.latex+"\\]</div>"+
+      "<p><b>Valor numérico:</b> "+numeric.toPrecision(10)+"</p>";
+    await drawMainGraph(expression,A,B);await drawMethodDiagram();renderFormula();
+  }catch(error){box.innerHTML="<p class='error'>"+String(error.message||error)+"</p>";}
 }
 async function calculateVolume(){
   const box=$("result");
   try{
     const A=Number($("a").value),B=Number($("b").value),f=$("expr").value;
-    if(!(B>A)) throw new Error("El límite superior debe ser mayor que el inferior.");
-    let g,description;
+    if(!(B>A))throw new Error("El límite superior debe ser mayor que el inferior.");
+    let integrand,description;
     if(moduleNumber===13){
-      const s=$("shape").value;
-      g=s==="square"?"("+f+")^2":s==="semicircle"?"pi*("+f+")^2/8":"sqrt(3)*("+f+")^2/4";
-      description=s==="square"?"A(x)=s²":s==="semicircle"?"A(x)=πd²/8":"A(x)=√3s²/4";
+      const shape=$("shape").value;
+      integrand=shape==="square"?"("+f+")^2":shape==="semicircle"?"pi*("+f+")^2/8":"sqrt(3)*("+f+")^2/4";
+      description=shape==="square"?"A(x)=s(x)²":shape==="semicircle"?"A(x)=πd(x)²/8":"A(x)=√3s(x)²/4";
     }else{
-      const m=$("method").value;
-      if(m==="shell"){g="2*pi*x*("+f+")";description="A(x)=2π·radio·altura";}
-      else if(m==="washer"){const inner=$("inner").value||"0";g="pi*(("+f+")^2-("+inner+")^2)";description="A(x)=π(R²-r²)";}
-      else{g="pi*("+f+")^2";description="A(x)=πr²";}
+      const mode=$("method").value;
+      if(mode==="shell"){integrand="2*pi*x*("+f+")";description="dV=2π·radio·altura·dx";}
+      else if(mode==="washer"){const inner=$("inner").value||"0";integrand="pi*(("+f+")^2-("+inner+")^2)";description="A(x)=π(R(x)²−r(x)²)";}
+      else{integrand="pi*("+f+")^2";description="A(x)=πR(x)²";}
     }
-    const q=await integrateFormula(g,A,B);
-    box.innerHTML="<b>1. Área o elemento de volumen:</b><div class='formula'>"+description+"</div><b>2. Integral planteada:</b><div class='formula'>\\[V=\\int_{"+A+"}^{"+B+"}("+g+")\\,dx\\]</div><b>3. Resultado:</b><p>V = <b>"+Number(q.numeric).toPrecision(10)+"</b> unidades cúbicas</p>";
-    await drawMethod(f,A,B);drawConceptDiagram();renderFormula();
-  }catch(err){box.innerHTML="<p class='error'>"+err.message+"</p>";}
+    const result=await integrateFormula(integrand,A,B),numeric=Number(result.numeric);
+    if(!Number.isFinite(numeric))throw new Error("No se obtuvo un volumen finito. Revisa la función y los límites.");
+    box.innerHTML="<b>1. Elemento geométrico:</b><div class='formula'>"+description+"</div>"+
+      "<b>2. Integral planteada:</b><div class='formula'>\\[V=\\int_{"+A+"}^{"+B+"}("+integrand+")\\,dx\\]</div>"+
+      "<b>3. Volumen:</b><p><b>"+numeric.toPrecision(10)+"</b> unidades cúbicas</p>";
+    await drawMainGraph(f,A,B);await drawMethodDiagram();renderFormula();
+  }catch(error){box.innerHTML="<p class='error'>"+String(error.message||error)+"</p>";}
 }
-window.addEventListener("load",()=>{if(moduleNumber===13||moduleNumber===14){$("method")?.addEventListener("change",calculateVolume);$("shape")?.addEventListener("change",calculateVolume);$("inner")?.addEventListener("change",calculateVolume);calculateVolume();}else{calculate();}});
+window.addEventListener("load",()=>{
+  if(moduleNumber===13||moduleNumber===14){
+    ["method","shape","inner"].forEach(id=>{const control=$(id);if(control)control.addEventListener("change",calculateVolume);});
+    calculateVolume();
+  }else calculate();
+});
 </script>
 {% endblock %}
