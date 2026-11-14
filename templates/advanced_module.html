@@ -175,11 +175,17 @@ function drawConceptDiagram(){
   const dark=document.documentElement.classList.contains("dark"), color=dark?"#e5e7eb":"#172033";
   let traces=[],layout={title:"Esquema del método",paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:35,r:25,t:55,b:35},showlegend:false};
   if(moduleNumber===7){
-    traces=[{type:"bar",x:["u·v","u·dv","v·du","diferencial"],y:[4,2,2,1],text:["Producto","u dv","v du","d(uv)"],textposition:"inside",marker:{color:["#2563eb","#0d9488","#d97706","#94a3b8"]}}];
-    layout.title="Integración por partes · relación con la regla del producto";layout.yaxis={visible:false};
+    traces=[];
+    layout.title="Integración por partes · regla del producto";
+    layout.xaxis={visible:false,range:[0,10]};layout.yaxis={visible:false,range:[0,5]};
+    layout.shapes=[{type:"rect",x0:1,y0:1,x1:4,y1:3,line:{color:"#2563eb",width:2},fillcolor:"rgba(37,99,235,.18)"},{type:"rect",x0:5,y0:1,x1:8,y1:3,line:{color:"#0d9488",width:2},fillcolor:"rgba(13,148,136,.18)"}];
+    layout.annotations=[{x:2.5,y:2,text:"u · dv",showarrow:false,font:{size:18}},{x:6.5,y:2,text:"v · du",showarrow:false,font:{size:18}},{x:4.5,y:4,text:"d(uv) = u·dv + v·du",showarrow:false,font:{size:16}}];
   }else if(moduleNumber===8){
-    traces=[{type:"bar",orientation:"h",x:[4,2,2],y:["P(x)/Q(x)","A/(x−r₁)","B/(x−r₂)"],text:["Fracción racional","Primer término","Segundo término"],textposition:"inside",marker:{color:["#2563eb","#0d9488","#d97706"]}}];
-    layout.title="Fracciones parciales · separar en términos simples";layout.xaxis={visible:false};layout.yaxis={automargin:true};
+    traces=[];
+    layout.title="Fracciones parciales · descomposición de una fracción";
+    layout.xaxis={visible:false,range:[0,10]};layout.yaxis={visible:false,range:[0,5]};
+    layout.shapes=[{type:"rect",x0:.5,y0:1.5,x1:3.2,y1:3.2,line:{color:"#2563eb",width:2},fillcolor:"rgba(37,99,235,.15)"},{type:"rect",x0:6.5,y0:2.6,x1:9.2,y1:3.8,line:{color:"#0d9488",width:2},fillcolor:"rgba(13,148,136,.15)"},{type:"rect",x0:6.5,y0:.8,x1:9.2,y1:2,line:{color:"#d97706",width:2},fillcolor:"rgba(217,119,6,.15)"}];
+    layout.annotations=[{x:1.85,y:2.35,text:"P(x) / Q(x)",showarrow:false,font:{size:17}},{x:5,y:2.5,text:"=",showarrow:false,font:{size:24}},{x:7.85,y:3.2,text:"A / (x−r₁)",showarrow:false},{x:7.85,y:1.4,text:"B / (x−r₂)",showarrow:false},{x:5,y:.3,text:"Cada factor del denominador genera términos simples",showarrow:false}];
   }else if(moduleNumber===9){
     traces=[{x:[0,1,2,3,4],y:[0,1,Math.sqrt(2),Math.sqrt(3),2],mode:"lines+markers",name:"√x"},{x:[0,1,2,3,4],y:[0,1,Math.pow(2,.5),Math.pow(3,.5),2],mode:"markers",name:"x^(1/2)"}];
     layout.title="Radical y potencia fraccionaria · √x = x^(1/2)";layout.xaxis={title:"x"};layout.yaxis={title:"valor"};
@@ -188,14 +194,15 @@ function drawConceptDiagram(){
     traces=[{x:X,y:X.map(Math.sin),mode:"lines",name:"sen x"},{x:X,y:X.map(Math.cos),mode:"lines",name:"cos x"}];
     layout.title="Funciones seno y coseno · periodo 2π";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"valor"};
   }else if(moduleNumber===11){
-    traces=[{x:[0,3,3,0],y:[0,0,Math.sqrt(5.25),0],mode:"lines+markers",fill:"toself",name:"Triángulo de referencia",line:{width:3} }];
+    traces=[{x:[0,1.5,1.5,0],y:[0,0,Math.sqrt(6.75),0],mode:"lines+markers",fill:"toself",name:"Triángulo de referencia",line:{width:3} }];
     layout.title="Triángulo rectángulo · x = 3 sen θ";layout.xaxis={title:"cateto adyacente"};layout.yaxis={title:"cateto opuesto"};
-    layout.annotations=[{x:1.5,y:0,text:"x",showarrow:false,yshift:-16},{x:3,y:1.15,text:"√(9−x²)",showarrow:false,xshift:42},{x:1.5,y:1.65,text:"3",showarrow:false}];
+    layout.annotations=[{x:.75,y:0,text:"x",showarrow:false,yshift:-16},{x:1.5,y:1.3,text:"√(9−x²)",showarrow:false,xshift:42},{x:.75,y:1.3,text:"3",showarrow:false}];
   }else if(moduleNumber===12){
-    const X=makeX(0,2*Math.PI,180);
-    traces=[{x:X,y:X.map(Math.cos),mode:"lines",name:"cos x"},{x:X,y:X.map(Math.sin),mode:"lines",name:"sen x"}];
-    layout.title="Ángulo mitad · t = tan(x/2)";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"sen x / cos x"};
-    layout.annotations=[{x:Math.PI/2,y:1,text:"t = tan(x/2)",showarrow:true,arrowhead:2}];
+    const X=makeX(0,Math.PI*1.96,180);
+    traces=[{x:X,y:X.map(v=>Math.tan(v/2)),mode:"lines",name:"t = tan(x/2)"}];
+    layout.title="Sustitución universal · variable t = tan(x/2)";layout.xaxis={title:"x (radianes)"};layout.yaxis={title:"t"};
+    layout.shapes=[{type:"line",x0:Math.PI,x1:Math.PI,y0:-8,y1:8,line:{dash:"dash",color:"#ef4444"}}];
+    layout.annotations=[{x:Math.PI,y:6,text:"Asíntota en x = π",showarrow:true,arrowhead:2}];
   }else return;
   Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});
 }
