@@ -121,3 +121,13 @@ La interfaz incluye un botón **Modo oscuro** y guarda la preferencia en el nave
 3. Probar el proyecto localmente.
 4. Usar commits descriptivos.
 5. Abrir un Pull Request explicando los cambios y las pruebas realizadas.
+
+
+## Mejoras didácticas y gráficas
+
+La versión actual incorpora:
+- Guías breves de resolución paso a paso en los 14 módulos.
+- Gráficas numéricas con ejes identificados, títulos específicos y leyendas para las aproximaciones.
+- Representaciones diferenciadas: rectángulos de Riemann, trapecios, puntos medios, parábolas de Simpson, área definida, funciones y antiderivadas.
+- En los módulos 7 a 14, procedimientos específicos para partes, fracciones parciales, radicales, identidades trigonométricas, sustituciones y aplicaciones de volumen.
+- En el módulo 14, una representación tridimensional del sólido generado por revolución con discos o arandelas.
