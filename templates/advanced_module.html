@@ -156,7 +156,7 @@ async function drawMethod(e,A,B) {
   }
   Plotly.newPlot("plot",traces,layout,{responsive:true,displaylogo:false});
 }
-function drawConceptDiagram(){
+async function drawConceptDiagram(){
   const el=$("methodDiagram"); if(!el)return;
   const dark=document.documentElement.classList.contains("dark"), color=dark?"#e5e7eb":"#172033";
   let traces=[],layout={title:"Esquema del método",paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:35,r:25,t:55,b:35},showlegend:false};
@@ -166,6 +166,22 @@ function drawConceptDiagram(){
     layout.xaxis={visible:false,range:[0,10]};layout.yaxis={visible:false,range:[0,5]};
     layout.shapes=[{type:"rect",x0:1,y0:1,x1:4,y1:3,line:{color:"#2563eb",width:2},fillcolor:"rgba(37,99,235,.18)"},{type:"rect",x0:5,y0:1,x1:8,y1:3,line:{color:"#0d9488",width:2},fillcolor:"rgba(13,148,136,.18)"}];
     layout.annotations=[{x:2.5,y:2,text:"u · dv",showarrow:false,font:{size:18}},{x:6.5,y:2,text:"v · du",showarrow:false,font:{size:18}},{x:4.5,y:4,text:"d(uv) = u·dv + v·du",showarrow:false,font:{size:16}}];
+  }else if(moduleNumber===13 || moduleNumber===14){
+    const A=Number($("a").value),B=Number($("b").value),xs=makeX(A,B,48),sampled=await sampleFormula($("expr").value,xs);
+    const vals=sampled.y.map(v=>v===null?0:Number.isFinite(Number(v))?Math.max(0,Math.abs(Number(v))):0);
+    const theta=Array.from({length:40},(_,j)=>2*Math.PI*j/39);
+    if(moduleNumber===13){
+      const shape=$("shape").value,xx=[],yy=[],zz=[];
+      for(let i=0;i<xs.length;i++){let ring=[];const v=vals[i];if(shape==="square")ring=[[-v/2,-v/2],[v/2,-v/2],[v/2,v/2],[-v/2,v/2],[-v/2,-v/2]];else if(shape==="triangle")ring=[[-v/2,0],[v/2,0],[0,Math.sqrt(3)*v/2],[-v/2,0]];else{for(let j=0;j<40;j++){const t=Math.PI*j/39;ring.push([v/2*Math.cos(t),v/2*Math.sin(t)]);}}for(let j=0;j<ring.length;j++){if(!xx[j]){xx[j]=[];yy[j]=[];zz[j]=[];}xx[j].push(xs[i]);yy[j].push(ring[j][0]);zz[j].push(ring[j][1]);}}
+      traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.9,name:"Secciones transversales"}];
+      layout={title:"3D · sólido formado por secciones",paper_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje x"},yaxis:{title:"Ancho"},zaxis:{title:"Altura"},aspectmode:"data"}};
+    }else{
+      const method=$("method").value,inner=Math.max(0,Number($("inner").value||0));
+      if(method==="shell"){const k=Math.floor(xs.length*.6),r=Math.abs(xs[k]),h=vals[k],xx=[],yy=[],zz=[];for(let i=0;i<24;i++){const v=h*i/23;xx.push(theta.map(t=>r*Math.cos(t)));yy.push(theta.map(()=>v));zz.push(theta.map(t=>r*Math.sin(t)));}traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Teal",showscale:false,opacity:.9,name:"Capa cilíndrica"}];layout={title:"3D · capa cilíndrica alrededor del eje y",paper_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"x"},yaxis:{title:"altura"},zaxis:{title:"z"},aspectmode:"data"}};
+      }else{const xx=[],yy=[],zz=[];for(let i=0;i<xs.length;i++){xx.push(theta.map(()=>xs[i]));yy.push(theta.map(t=>vals[i]*Math.cos(t)));zz.push(theta.map(t=>vals[i]*Math.sin(t)));}traces=[{type:"surface",x:xx,y:yy,z:zz,colorscale:"Blues",showscale:false,opacity:.9,name:"Sólido de revolución"}];layout={title:method==="washer"?"3D · sólido con arandelas":"3D · sólido con discos",paper_bgcolor:"rgba(0,0,0,0)",font:{color},margin:{l:0,r:0,t:55,b:0},scene:{xaxis:{title:"Eje de giro x"},yaxis:{title:"y"},zaxis:{title:"z"},aspectmode:"data"}};}
+    }
+    Plotly.newPlot(el,traces,layout,{responsive:true,displaylogo:false});return;
+  }
   }else if(moduleNumber===8){
     traces=[];
     layout.title="Fracciones parciales · descomposición de una fracción";
